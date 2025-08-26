@@ -69,6 +69,8 @@ structures = {
             ae.ReferenceStructure("Xpulse_train"), (start, interval, magnitude)
             )
     },
+    "sum": lambda x: ae.CallStructure(
+            ae.ReferenceStructure("sum_xmile"), (x,)),
     "max": {
         1: lambda x: ae.CallStructure(
             ae.ReferenceStructure("vmax_xmile"), (x,)),

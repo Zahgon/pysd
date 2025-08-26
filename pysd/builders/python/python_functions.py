@@ -35,6 +35,9 @@ functionspace = {
     "sum": ("sum(%(0)s, dim=%(axis)s)", (("functions", "sum"),)),
     "vmax": ("vmax(%(0)s, dim=%(axis)s)", (("functions", "vmax"),)),
     "vmin": ("vmin(%(0)s, dim=%(axis)s)", (("functions", "vmin"),)),
+    "mean": ("np.mean(%(0)s)", (("numpy",),)),
+    "stddev": ("np.std(%(0)s)", (("numpy",),)),
+    "sum_xmile": ("sum(%(0)s)", (("functions", "sum"),)),
     "vmax_xmile": ("vmax(%(0)s)", (("functions", "vmax"),)),
     "vmin_xmile": ("vmin(%(0)s)", (("functions", "vmin"),)),
     "vector_select": (
