@@ -40,14 +40,7 @@ def ramp(time, slope, start, finish=None):
         If after ramp ends, returns top of ramp.
 
     """
-    t = time()
-    # compute out (MIN(time, finish)-start)*slope
-    if finish is None:
-        final = t
-    else:
-        final = np.minimum(finish, t)
-
-    return (t + SMALL_VENSIM > start) * slope * (final-start)
+    pass
 
 
 def step(time, value, tstep):
@@ -71,7 +64,7 @@ def step(time, value, tstep):
         - In range [tstep, +inf]:
             returns `value`
     """
-    return value * (time() + time.time_step()/2 > tstep)
+    pass
 
 
 def pulse(time, start, repeat_time=0, width=None, magnitude=None, end=None):
@@ -109,15 +102,7 @@ def pulse(time, start, repeat_time=0, width=None, magnitude=None, end=None):
             returns 0
 
     """
-    t = time()
-    width = .5*time.time_step() if width is None else width
-    out = magnitude/time.time_step() if magnitude is not None else 1
-    if repeat_time == 0:
-        return out if start - SMALL_VENSIM <= t < start + width else 0
-    elif start <= t and (end is None or t < end):
-        return out if (t - start + SMALL_VENSIM) % repeat_time < width else 0
-    else:
-        return 0
+    pass
 
 
 def if_then_else(condition, val_if_true, val_if_false):
@@ -139,27 +124,7 @@ def if_then_else(condition, val_if_true, val_if_false):
         The value depending on the condition.
 
     """
-    # NUMPY: replace xr by np
-    if isinstance(condition, xr.DataArray):
-        # NUMPY: neccessarry for keep the same shape always
-        # if condition.all():
-        #    value = val_if_true()
-        # elif not condition.any():
-        #    value = val_if_false()
-        # else:
-        #    return np.where(condition, val_if_true(), val_if_false())
-        #
-        # if isinstance(value, np.ndarray):
-        #    return value
-        # return np.full_like(condition, value)
-        if condition.all():
-            return val_if_true()
-        elif not condition.any():
-            return val_if_false()
-
-        return xr.where(condition, val_if_true(), val_if_false())
-
-    return val_if_true() if condition else val_if_false()
+    pass
 
 
 def xidz(numerator, denominator, x):
@@ -186,22 +151,7 @@ def xidz(numerator, denominator, x):
         - value_if_denom_is_zero otherwise
 
     """
-    # NUMPY: replace DataArray by np.ndarray, xr.where -> np.where
-    if isinstance(denominator, xr.DataArray):
-        return xr.where(np.abs(denominator) < SMALL_VENSIM,
-                        x,
-                        numerator/denominator)
-
-    if abs(denominator) < SMALL_VENSIM:
-        # NUMPY: neccessarry for keep the same shape always
-        # if isinstance(numerator, np.ndarray):
-        #    return np.full_like(numerator, x)
-        return x
-    else:
-        # NUMPY: neccessarry for keep the same shape always
-        # if isinstance(x, np.ndarray):
-        #    return np.full_like(x, numerator/denominator)
-        return numerator/denominator
+    pass
 
 
 def zidz(numerator, denominator):
@@ -224,21 +174,7 @@ def zidz(numerator, denominator):
         - 0 or 0s array otherwise
 
     """
-    # NUMPY: replace DataArray by np.ndarray, xr.where -> np.where
-    if isinstance(denominator, xr.DataArray):
-        return xr.where(np.abs(denominator) < SMALL_VENSIM,
-                        0,
-                        numerator/denominator)
-
-    if abs(denominator) < SMALL_VENSIM:
-        # NUMPY: neccessarry for keep the same shape always
-        # if isinstance(denominator, np.ndarray):
-        #    return np.zeros_like(denominator)
-        if isinstance(numerator, xr.DataArray):
-            return xr.DataArray(0, numerator.coords, numerator.dims)
-        return 0
-    else:
-        return numerator/denominator
+    pass
 
 
 def active_initial(stage, expr, init_val):
@@ -260,11 +196,7 @@ def active_initial(stage, expr, init_val):
         - inti_val if stage='Initialization'
         - expr() otherwise
     """
-    # NUMPY: both must have same dimensions in inputs, remove time.stage
-    if stage == 'Initialization':
-        return init_val
-    else:
-        return expr()
+    pass
 
 
 def incomplete(*args):
@@ -281,11 +213,7 @@ def incomplete(*args):
     numpy.nan
 
     """
-    warnings.warn(
-        'Call to undefined function, calling dependencies and returning NaN',
-        RuntimeWarning, stacklevel=2)
-
-    return np.nan
+    pass
 
 
 def not_implemented_function(*args):
@@ -318,11 +246,7 @@ def integer(x):
         Returns integer part of x.
 
     """
-    # NUMPY: replace xr by np
-    if isinstance(x, xr.DataArray):
-        return x.astype(int)
-    else:
-        return int(x)
+    pass
 
 
 def quantum(a, b):
@@ -342,13 +266,7 @@ def quantum(a, b):
         If b > 0 returns b * integer(a/b). Otherwise, returns a.
 
     """
-    # NUMPY: replace xr by np
-    if isinstance(b, xr.DataArray):
-        return xr.where(b < SMALL_VENSIM, a, b*integer(a/b))
-    if b < SMALL_VENSIM:
-        return a
-    else:
-        return b*integer(a/b)
+    pass
 
 
 def modulo(x, m):
@@ -369,7 +287,7 @@ def modulo(x, m):
         in the range (-m, 0] as Vensim does. x - quantum(x, m)
 
     """
-    return x - quantum(x, m)
+    pass
 
 
 def sum(x, dim=None):
@@ -390,12 +308,7 @@ def sum(x, dim=None):
         The result of the sum operation in the given dimensions.
 
     """
-    # NUMPY: replace by np.sum(x, axis=axis) put directly in the file
-    # float returned if the function is applied over all the dimensions
-    if dim is None or set(x.dims) == set(dim):
-        return float(x.sum())
-
-    return x.sum(dim=dim)
+    pass
 
 
 def prod(x, dim=None):
@@ -416,12 +329,7 @@ def prod(x, dim=None):
         The result of the product operation in the given dimensions.
 
     """
-    # NUMPY: replace by np.prod(x, axis=axis) put directly in the file
-    # float returned if the function is applied over all the dimensions
-    if dim is None or set(x.dims) == set(dim):
-        return float(x.prod())
-
-    return x.prod(dim=dim)
+    pass
 
 
 def vmin(x, dim=None):
@@ -442,12 +350,7 @@ def vmin(x, dim=None):
         The result of the minimum value over the given dimensions.
 
     """
-    # NUMPY: replace by np.min(x, axis=axis) put directly in the file
-    # float returned if the function is applied over all the dimensions
-    if dim is None or set(x.dims) == set(dim):
-        return float(x.min())
-
-    return x.min(dim=dim)
+    pass
 
 
 def vmax(x, dim=None):
@@ -468,12 +371,7 @@ def vmax(x, dim=None):
         The result of the maximum value over the dimensions.
 
     """
-    # NUMPY: replace by np.max(x, axis=axis) put directly in the file
-    # float returned if the function is applied over all the dimensions
-    if dim is None or set(x.dims) == set(dim):
-        return float(x.max())
-
-    return x.max(dim=dim)
+    pass
 
 
 def invert_matrix(mat):
@@ -493,9 +391,7 @@ def invert_matrix(mat):
         Inverted matrix.
 
     """
-    # NUMPY: avoid converting to xarray, put directly the expression
-    # in the model
-    return xr.DataArray(np.linalg.inv(mat.values), mat.coords, mat.dims)
+    pass
 
 
 def vector_select(selection_array, expression_array, dim,
@@ -569,72 +465,7 @@ def vector_select(selection_array, expression_array, dim,
         The output of the numerical action.
 
     """
-    zeros = (selection_array == 0).all(dim=dim)
-    non_zeros = (selection_array != 0).sum(dim=dim)
-
-    # Manage error actions
-    if np.any(zeros) and error_action in (1, 3):
-        raise FloatingPointError(
-            "All the values of selection_array are 0...")
-
-    if np.any(non_zeros > 1) and error_action in (2, 3):
-        raise FloatingPointError(
-            "More than one non-zero values in selection_array...")
-
-    # Manage numeric actions (array to operate)
-    # NUMPY: replace by np.where
-    if numerical_action in range(5):
-        array = xr.where(
-            selection_array == 0,
-            np.nan,
-            selection_array * expression_array
-        )
-    elif numerical_action == 5:
-        warnings.warn(
-            "Vensim's help says that numerical_action=5 computes the "
-            "product of selection_array ^ expression_array. But, in fact,"
-            " Vensim is computing the product of expression_array ^ "
-            " selection array. The output of this function behaves as "
-            "Vensim, expression_array ^ selection_array."
-        )
-        array = xr.where(
-            selection_array == 0,
-            np.nan,
-            expression_array ** selection_array
-        )
-    elif numerical_action in range(6, 11):
-        array = xr.where(
-            selection_array == 0,
-            np.nan,
-            expression_array
-        )
-    else:
-        raise ValueError(
-            f"Invalid argument value 'numerical_action={numerical_action}'. "
-            "'numerical_action' must be 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 or 10.")
-
-    # Manage numeric actions (operation)
-    # NUMPY: use the axis
-    if numerical_action in (0, 6):
-        out = array.sum(dim=dim, skipna=True)
-    elif numerical_action in (1, 5, 7):
-        out = array.prod(dim=dim, skipna=True)
-    elif numerical_action in (2, 8):
-        out = array.min(dim=dim, skipna=True)
-    elif numerical_action in (3, 9):
-        out = array.max(dim=dim, skipna=True)
-    elif numerical_action in (4, 10):
-        out = array.mean(dim=dim, skipna=True)
-
-    # Replace missin vals
-    if len(out.shape) == 0 and np.all(zeros):
-        return missing_vals
-    elif len(out.shape) == 0:
-        return float(out)
-    elif np.any(zeros):
-        out.values[zeros.values] = missing_vals
-
-    return out
+    pass
 
 
 def vector_sort_order(vector, direction):
@@ -658,12 +489,7 @@ def vector_sort_order(vector, direction):
         The sorted vector.
 
     """
-    # TODO: can direction be an array? In this case this will fail
-    if direction <= 0:
-        # NUMPY: return flip directly
-        flip = np.flip(vector.argsort(), axis=-1)
-        return xr.DataArray(flip.values, vector.coords, vector.dims)
-    return vector.argsort()
+    pass
 
 
 def vector_reorder(vector, svector):
@@ -685,36 +511,7 @@ def vector_reorder(vector, svector):
         The sorted vector.
 
     """
-    # NUMPY: Use directly numpy sort functions, no need to assign coords later
-    if len(svector.dims) > 1:
-        # TODO this may be simplified
-        new_vector = vector.copy()
-        dims = svector.dims
-        # create an empty array to hold the orderings (only last dim)
-        arr = xr.DataArray(
-            np.nan,
-            {dims[-1]: vector.coords[dims[-1]].values},
-            dims[-1:]
-        )
-        # split the ordering array in 0-dim arrays
-        svectors = utils.xrsplit(svector)
-        orders = {}
-        for sv in svectors:
-            # regrup the ordering arrays using last dimensions
-            pos = {dim: str(sv.coords[dim].values) for dim in dims[:-1]}
-            key = ";".join(pos.values())
-            if key not in orders.keys():
-                orders[key] = (pos, arr.copy())
-            orders[key][1].loc[sv.coords[dims[-1]]] = sv.values
-
-        for pos, array in orders.values():
-            # get the reordered array
-            values = [vector.loc[pos].values[int(i)] for i in array.values]
-            new_vector.loc[pos] = values
-
-        return new_vector
-
-    return vector[svector.values].assign_coords(vector.coords)
+    pass
 
 
 def vector_rank(vector, direction):
@@ -738,7 +535,7 @@ def vector_rank(vector, direction):
         The rank of the vector.
 
     """
-    return vector_sort_order(vector, direction).argsort() + 1
+    pass
 
 
 def get_time_value(time, relativeto, offset, measure):
@@ -771,7 +568,7 @@ def get_time_value(time, relativeto, offset, measure):
             - 6 days since Jan 1., 1 BC (year 1 BC is treated as year 0)
             - 7 hour of day (0-23)
             - 8 minute of hour (0-59)
-            - 9 second of minute (0-59.999999 – not an integer)
+            - 9 second of minute (0-59.999999 â€“ not an integer)
             - 10 elapsed seconds modulo 500,000 (0-499,999)
 
     Returns
@@ -780,79 +577,4 @@ def get_time_value(time, relativeto, offset, measure):
         The resulting time value.
 
     """
-    if relativeto == 0:
-        # Current time
-        ctime = time()
-    elif relativeto == 1:
-        # Initial time
-        # Not implemented as it doesn't work as Vensim docs say
-        # TODO check other versions or implement it as it should be?
-        raise NotImplementedError("'relativeto=1' not implemented...")
-        # ctime = time.initial_time()
-    elif relativeto == 2:
-        # Machine time
-        ctime = utils.get_current_computer_time()
-    else:
-        # Invalid value
-        raise ValueError(
-            f"Invalid argument value 'relativeto={relativeto}'. "
-            "'relativeto' must be 0, 1 or 2.")
-
-    if measure == 0:
-        # units of Time in the model (only for relativeto 0 and 1)
-        if relativeto == 2:
-            # measure=0 only supported with relativeto=0 or 1
-            raise ValueError(
-                "Invalid argument 'measure=0' with 'relativeto=2'.")
-        else:
-            return ctime + offset
-    elif measure == 1:
-        # years since 1 BC (an integer, same as the normal calendar year)
-        if relativeto == 2:
-            return ctime.year
-    elif measure == 2:
-        # quarter of year (1-4)
-        if relativeto == 2:
-            return int(1 + (ctime.month-0.5) // 3)
-    elif measure == 3:
-        # month of year (1-12)
-        if relativeto == 2:
-            return ctime.month
-    elif measure == 4:
-        # day of month (1-31)
-        if relativeto == 2:
-            return ctime.day
-    elif measure == 5:
-        # day of week (0-6 where 0 is Sunday)
-        if relativeto == 2:
-            return ctime.weekday()
-    elif measure == 6:
-        # days since Jan 1., 1 BC (year 1 BC is treated as year 0)
-        if relativeto == 2:
-            return (ctime - datetime(1, 1, 1)).days
-    elif measure == 7:
-        # hour of day (0-23)
-        if relativeto == 2:
-            return ctime.hour
-    elif measure == 8:
-        # minute of hour (0-59)
-        if relativeto == 2:
-            return ctime.minute
-    elif measure == 9:
-        # second of minute (0-59.99 – not an integer)
-        if relativeto == 2:
-            return ctime.second + 1e-6*ctime.microsecond
-    elif measure == 10:
-        # elapsed seconds modulo 500,000 (0-499,999)
-        if relativeto == 2:
-            return (ctime - datetime(1, 1, 1)).seconds % 500000
-    else:
-        raise ValueError(
-            f"Invalid argument value 'measure={measure}'. "
-            "'measure' must be 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 or 10.")
-
-    # TODO include other measures for relativeto=0
-    raise NotImplementedError(
-        f"The case 'relativeto={relativeto}' and 'measure={measure}' "
-        "is not implemented..."
-    )
+    pass

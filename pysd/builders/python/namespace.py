@@ -57,7 +57,7 @@ class NamespaceManager:
         None
 
         """
-        self.make_python_identifier(string, add_to_namespace=True)
+        pass
 
     def make_python_identifier(self, string: str, prefix: str = None,
                                add_to_namespace: bool = False) -> str:
@@ -133,46 +133,7 @@ class NamespaceManager:
             https://docs.python.org/2/reference/lexical_analysis.html#identifiers
 
         """
-        s = string.lower()
-        clean_s = s.replace(" ", "_")
-
-        # Make spaces into underscores
-        s = re.sub(r"[\s\t\n_]+", "_", s)
-
-        # remove accents, diaeresis and others ó -> o
-        s = normalize("NFD", s).encode("ascii", "ignore").decode("utf-8")
-
-        # Remove invalid characters
-        s = re.sub(r"[^0-9a-zA-Z_]", "", s)
-
-        # If leading character is not a letter add nvs_.
-        # Only letters can be leading characters.
-        if prefix is not None:
-            s = prefix + "_" + s
-        elif re.findall(r"^[0-9]", s) or not s:
-            s = "nvs_" + s
-        elif re.findall(r"^_", s):
-            s = "nvs" + s
-
-        # replace multiple _ after cleaning
-        s = re.sub(r"[_]+", "_", s)
-
-        # Check that the string is not a Python identifier
-        identifier = s
-        i = 1
-        while identifier in self._used_words:
-            identifier = s + '_' + str(i)
-            i += 1
-
-        # include the word in used words to avoid using it againg
-        self._used_words.add(identifier)
-
-        if add_to_namespace:
-            # include word to the namespace
-            self.namespace[string] = identifier
-            self.cleanspace[clean_s] = identifier
-
-        return identifier
+        pass
 
     def get_original_name(self, identifier):
         """
@@ -189,8 +150,4 @@ class NamespaceManager:
             The original name of the variable.
 
         """
-        for key, value in self.namespace.items():
-            if value == identifier:
-                return key
-
-        raise ValueError(f"'{identifier}' not found in the namespace.")
+        pass

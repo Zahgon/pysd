@@ -15,7 +15,7 @@ in order to build a model in other programming languages. Two more
 element-like objects could be defined, which are only used for testing:
 
 - Constraint: constraint for Reality check, defined with ':THE CONDITION:'
-- TestInput: inputs for testing, defined with ':TEST INPUT:'
+- TestInput: inputs for testing, defined with ':TESTÂ INPUT:'
 
 """
 import re
@@ -64,32 +64,16 @@ class Element():
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get element information."""
-        return self.__str__()
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print element information to standard output."""
-        print(self._verbose)
+        pass
 
     def _parse_units(self, units_str: str) -> Tuple[str, tuple]:
         """Separate the limits from the units."""
-        # TODO improve units parsing: parse them when parsing the section
-        # elements
-        if not units_str:
-            return "", None
-
-        if units_str.endswith("]"):
-            units, lims = units_str.rsplit("[")  # types: str, str
-        else:
-            return units_str, None
-
-        lims = tuple(
-            [
-                float(x) if x.strip() != "?" else None
-                for x in lims.strip("]").split(",")
-            ]
-        )
-        return units.strip(), lims
+        pass
 
     def parse(self) -> object:
         """
@@ -108,12 +92,7 @@ class Element():
             The subscript range definition object or component object.
 
         """
-        tree = vu.Grammar.get("element_object").parse(self.equation)
-        self.component = ElementsComponentVisitor(tree).component
-        self.component.units = self.units
-        self.component.limits = self.limits
-        self.component.documentation = self.documentation
-        return self.component
+        pass
 
 
 class ElementsComponentVisitor(parsimonious.NodeVisitor):
@@ -131,120 +110,61 @@ class ElementsComponentVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_subscript_definition(self, n, vc):
-        self.component = SubscriptRange(
-            self.name, self.subscripts, self.mapping)
+        pass
 
     def visit_lookup_definition(self, n, vc):
-        self.component = Lookup(
-            self.name,
-            (self.subscripts, self.subscripts_except_groups),
-            self.expression
-        )
+        pass
 
     def visit_unchangeable_constant(self, n, vc):
-        self.component = UnchangeableConstant(
-            self.name,
-            (self.subscripts, self.subscripts_except_groups),
-            self.expression
-        )
+        pass
 
     def visit_component(self, n, vc):
-        self.component = Component(
-            self.name,
-            (self.subscripts, self.subscripts_except_groups),
-            self.expression
-        )
+        pass
 
     def visit_data_definition(self, n, vc):
-        self.component = Data(
-            self.name,
-            (self.subscripts, self.subscripts_except_groups),
-            self.keyword,
-            self.expression
-        )
+        pass
 
     def visit_keyword(self, n, vc):
-        self.keyword = n.text.strip()[1:-1].lower().replace(" ", "_")
+        pass
 
     def visit_imported_subscript(self, n, vc):
-        self.subscripts = dict(
-            file=self.qargs[0],
-            tab=self.qargs[1],
-            firstcell=self.qargs[2],
-            lastcell=self.qargs[3],
-            prefix=self.qargs[4]
-        )
+        pass
 
     def visit_string(self, n, vc):
-        self.qargs.append(vc[1])
-        return vc[1]
+        pass
 
     def visit_subscript_copy(self, n, vc):
-        self.component = SubscriptRange(self.name, vc[4].strip())
+        pass
 
     def visit_subscript_mapping(self, n, vc):
-        if ":" in str(vc):
-            # TODO: ensure the correct working of this condition adding
-            # full integration tests
-            warnings.warn(
-                "\nSubscript mapping detected. "
-                + "This feature works only for simple cases."
-            )
-            # Obtain subscript name and split by : and (
-            self.mapping.append(str(vc).split(":")[0].split("(")[1].strip())
-        else:
-            self.mapping.append(vc[0].strip())
+        pass
 
     def visit_subscript_range(self, n, vc):
-        subs_start = re.findall(r"\d+|\D+", vc[2].strip())
-        subs_end = re.findall(r"\d+|\D+", vc[6].strip())
-        prefix_start, num_start = "".join(subs_start[:-1]), int(subs_start[-1])
-        prefix_end, num_end = "".join(subs_end[:-1]), int(subs_end[-1])
-
-        if not prefix_start or not prefix_end:
-            raise ValueError(
-                "\nA numeric range must contain at least one letter.")
-        elif num_start >= num_end:
-            raise ValueError(
-                "\nThe number of the first subscript value must be "
-                "lower than the second subscript value in a "
-                "subscript numeric range.")
-        elif prefix_start != prefix_end:
-            raise ValueError(
-                "\nOnly matching names ending in numbers are valid.")
-
-        self.subscripts += [
-            prefix_start + str(i) for i in range(num_start, num_end + 1)
-            ]
+        pass
 
     def visit_constraint_definition(self, n, vc):
-        self.component = Constraint(self.name,
-                                    self.subscripts,
-                                    self.expression)
+        pass
 
     def visit_test_inputs_definition(self, n, vc):
-        self.component = TestInput(self.name,
-                                   self.subscripts,
-                                   self.expression)
+        pass
 
     def visit_name(self, n, vc):
-        self.name = vc[0].strip()
+        pass
 
     def visit_subscript(self, n, vc):
-        self.subscripts.append(n.text.strip())
+        pass
 
     def visit_subscript_except(self, n, vc):
-        self.subscripts_except.append(n.text.strip())
+        pass
 
     def visit_subscript_except_group(self, n, vc):
-        self.subscripts_except_groups.append(self.subscripts_except.copy())
-        self.subscripts_except = []
+        pass
 
     def visit_expression(self, n, vc):
-        self.expression = n.text.strip()
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text
+        pass
 
 
 class SubscriptRange():
@@ -267,12 +187,12 @@ class SubscriptRange():
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get subscript range information."""
-        return self.__str__()
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print subscript range information to standard output."""
-        print(self._verbose)
+        pass
 
     def get_abstract_subscript_range(self) -> AbstractSubscriptRange:
         """
@@ -287,11 +207,7 @@ class SubscriptRange():
           the model in another programming language.
 
         """
-        return AbstractSubscriptRange(
-            name=self.name,
-            subscripts=self.definition,
-            mapping=self.mapping
-        )
+        pass
 
 
 class GenericComponent():
@@ -318,20 +234,17 @@ class GenericComponent():
 
     @property
     def _expression(self):  # pragma: no cover
-        if hasattr(self, "ast"):
-            return str(self.ast).replace("\n", "\n\t")
-        else:
-            return self.expression.replace("\n", "\n\t")
+        pass
 
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get component information."""
-        return self.__str__()
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print component information to standard output."""
-        print(self._verbose)
+        pass
 
 
 class Component(GenericComponent):
@@ -366,11 +279,7 @@ class Component(GenericComponent):
         to visit the RHS of the expressions.
 
         """
-        tree = vu.Grammar.get("components", parsing_ops).parse(self.expression)
-        self.ast = EquationVisitor(tree).translation
-
-        if isinstance(self.ast, structures["get_xls_lookups"]):
-            self.lookup = True
+        pass
 
     def get_abstract_component(self) -> Union[AbstractComponent,
                                               AbstractLookup]:
@@ -387,11 +296,7 @@ class Component(GenericComponent):
           AbstractLookup class will be used.
 
         """
-        if self.lookup:
-            # get lookups equations
-            return AbstractLookup(subscripts=self.subscripts, ast=self.ast)
-        else:
-            return AbstractComponent(subscripts=self.subscripts, ast=self.ast)
+        pass
 
 
 class UnchangeableConstant(Component):
@@ -432,8 +337,7 @@ class UnchangeableConstant(Component):
           the model in another language.
 
         """
-        return AbstractUnchangeableConstant(
-            subscripts=self.subscripts, ast=self.ast)
+        pass
 
 
 class Lookup(Component):
@@ -467,8 +371,7 @@ class Lookup(Component):
         in 'parsing_grammars/lookups.peg' and the class LookupsVisitor
         to visit the RHS of the expressions.
         """
-        tree = vu.Grammar.get("lookups").parse(self.expression)
-        self.ast = LookupsVisitor(tree).translation
+        pass
 
     def get_abstract_component(self) -> AbstractLookup:
         """
@@ -482,7 +385,7 @@ class Lookup(Component):
           the model in another language.
 
         """
-        return AbstractLookup(subscripts=self.subscripts, ast=self.ast)
+        pass
 
 
 class Data(Component):
@@ -535,11 +438,7 @@ class Data(Component):
         Vensim.
 
         """
-        if not self.expression:
-            # empty data vars, read from vdf file
-            self.ast = structures["data"]()
-        else:
-            super().parse()
+        pass
 
     def get_abstract_component(self) -> AbstractData:
         """
@@ -553,8 +452,7 @@ class Data(Component):
           the model in another language.
 
         """
-        return AbstractData(
-            subscripts=self.subscripts, ast=self.ast, keyword=self.keyword)
+        pass
 
 
 class Constraint(GenericComponent):
@@ -576,9 +474,7 @@ class Constraint(GenericComponent):
     def parse(self):
         # It doesn't really parse anything, it assigns the matched expression
         # to the ast attribute
-        warnings.warn("':CONSTRAINT:' detected. The expression content "
-                      "is not parsed and will be ignored.")
-        self.ast = self.expression
+        pass
 
     def get_abstract_component(self) -> AbstractConstraint:
         """
@@ -592,8 +488,7 @@ class Constraint(GenericComponent):
           the model in another language.
 
         """
-        return AbstractConstraint(name=self.name, subscripts=self.subscripts,
-                                  expression=self.ast)
+        pass
 
 
 class TestInput(GenericComponent):
@@ -615,9 +510,7 @@ class TestInput(GenericComponent):
     def parse(self):
         # It doesn't really parse anything, it assigns the matched expression
         # to the ast attribute
-        warnings.warn("':TEST INPUT:' detected. The expression content "
-                      "is not parsed and will be ignored.")
-        self.ast = self.expression
+        pass
 
     def get_abstract_component(self) -> AbstractTestInput:
         """
@@ -631,8 +524,7 @@ class TestInput(GenericComponent):
           the model in another language.
 
         """
-        return AbstractTestInput(name=self.name, subscripts=self.subscripts,
-                                 expression=self.ast)
+        pass
 
 
 class LookupsVisitor(parsimonious.NodeVisitor):
@@ -643,39 +535,19 @@ class LookupsVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_limits(self, n, vc):
-        return n.text.strip()[:-1].replace(")-(", "),(")
+        pass
 
     def visit_regularLookup(self, n, vc):
-        if vc[0]:
-            xy_limits = np.array(eval(vc[0]))
-        else:
-            xy_limits = np.full((2, 2), np.nan)
-
-        values = np.array((eval(vc[2])))
-        values = values[np.argsort(values[:, 0])]
-
-        self.translation = structures["lookup"](
-            x=tuple(values[:, 0]),
-            y=tuple(values[:, 1]),
-            x_limits=tuple(xy_limits[:, 0]),
-            y_limits=tuple(xy_limits[:, 1]),
-            type="interpolate"
-        )
+        pass
 
     def visit_excelLookup(self, n, vc):
-        self.translation = structures["get_xls_lookups"](
-            file=self.qargs[0],
-            tab=self.qargs[1],
-            x_row_or_col=self.qargs[2],
-            cell=self.qargs[3]
-        )
+        pass
 
     def visit_string(self, n, vc):
-        self.qargs.append(vc[1])
-        return vc[1]
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text
+        pass
 
 
 class EquationVisitor(parsimonious.NodeVisitor):
@@ -688,143 +560,83 @@ class EquationVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_expr_type(self, n, vc):
-        self.translation = self.elements[vc[0]]
+        pass
 
     def visit_final_expr(self, n, vc):
         # expressions with logical binary operators (:AND:, :OR:)
-        return vu.split_arithmetic(
-            structures["logic"], parsing_ops["logic_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_logic_expr(self, n, vc):
         # expressions with logical unitary operators (:NOT:)
-        id = vc[2]
-        if vc[0].lower() == ":not:":
-            id = self.add_element(structures["logic"](
-                [":NOT:"],
-                (self.elements[id],)
-                ))
-        return id
+        pass
 
     def visit_comp_expr(self, n, vc):
         # expressions with comparisons (=, <>, <, <=, >, >=)
-        return vu.split_arithmetic(
-            structures["logic"], parsing_ops["comp_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_add_expr(self, n, vc):
         # expressions with additions (+, -)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["add_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_prod_expr(self, n, vc):
         # expressions with products (*, /)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["prod_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_exp_expr(self, n, vc):
         # expressions with exponentials (^)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["exp_ops"],
-            "".join(vc).strip(), self.elements, self.negatives)
+        pass
 
     def visit_neg_expr(self, n, vc):
-        id = vc[2]
-        if vc[0] == "-":
-            if isinstance(self.elements[id], (float, int)):
-                self.elements[id] = -self.elements[id]
-            else:
-                self.negatives.add(id)
-        return id
+        pass
 
     def visit_call(self, n, vc):
-        func = self.elements[vc[0]]
-        args = self.elements[vc[4]]
-        if func.reference in structures:
-            return self.add_element(structures[func.reference](*args))
-        else:
-            return self.add_element(structures["call"](func, args))
+        pass
 
     def visit_reference(self, n, vc):
-        id = self.add_element(structures["reference"](
-            vc[0].lower().replace(" ", "_"), self.subs))
-        self.subs = None
-        return id
+        pass
 
     def visit_limits(self, n, vc):
-        return self.add_element(n.text.strip()[:-1].replace(")-(", "),("))
+        pass
 
     def visit_lookup_with_def(self, n, vc):
-        if vc[10]:
-            xy_limits = np.array(eval(self.elements[vc[10]]))
-        else:
-            xy_limits = np.full((2, 2), np.nan)
-
-        values = np.array((eval(vc[11])))
-        values = values[np.argsort(values[:, 0])]
-
-        lookup = structures["lookup"](
-            x=tuple(values[:, 0]),
-            y=tuple(values[:, 1]),
-            x_limits=tuple(xy_limits[:, 0]),
-            y_limits=tuple(xy_limits[:, 1]),
-            type="interpolate"
-        )
-
-        return self.add_element(structures["with_lookup"](
-            self.elements[vc[4]], lookup))
+        pass
 
     def visit_array(self, n, vc):
-        if ";" in n.text or "," in n.text:
-            return self.add_element(np.squeeze(np.array(
-                [row.split(",") for row in n.text.strip(";").split(";")],
-                dtype=float)))
-        else:
-            return self.add_element(eval(n.text))
+        pass
 
     def visit_tabbed_array_call(self, n, vc):
-        return self.add_element(np.array(vc[4], dtype=float))
+        pass
 
     def visit_array_tabbed(self, n, vc):
-        return n.text.strip().split()
+        pass
 
     def visit_subscript_list(self, n, vc):
-        subs = [x.strip() for x in vc[2].split(",")]
-        self.subs = structures["subscripts_ref"](subs)
-        return ""
+        pass
 
     def visit_name(self, n, vc):
-        return n.text.strip()
+        pass
 
     def visit_expr(self, n, vc):
-        if vc[0] not in self.elements:
-            return self.add_element(eval(vc[0]))
-        else:
-            return vc[0]
+        pass
 
     def visit_string(self, n, vc):
-        return self.add_element(eval(n.text))
+        pass
 
     def visit_arguments(self, n, vc):
-        arglist = tuple(x.strip(",") for x in vc)
-        return self.add_element(tuple(
-            self.elements[arg] if arg in self.elements
-            else eval(arg) for arg in arglist))
+        pass
 
     def visit_parens(self, n, vc):
-        return vc[2]
+        pass
 
     def visit__(self, n, vc):
         # handles whitespace characters
-        return ""
+        pass
 
     def visit_nan(self, n, vc):
-        return self.add_element(np.nan)
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text
+        pass
 
     def add_element(self, element):
-        return vu.add_element(self.elements, element)
+        pass

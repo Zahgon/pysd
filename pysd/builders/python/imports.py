@@ -32,10 +32,7 @@ class ImportsManager():
           function name. If None module will be set to true.
 
         """
-        if function:
-            getattr(self, f"_{module}").add(function)
-        else:
-            setattr(self, f"_{module}", True)
+        pass
 
     def get_header(self, outfile: str) -> str:
         """
@@ -52,30 +49,4 @@ class ImportsManager():
             Header of the translated model file.
 
         """
-        text =\
-            f'"""\nPython model \'{outfile}\'\nTranslated using PySD\n"""\n\n'
-
-        text += "from pathlib import Path\n"
-
-        for module, shortname in self._external_libs.items():
-            if getattr(self, f"_{module}"):
-                text += f"import {module} as {shortname}\n"
-
-        for module in self._external_submodules:
-            if getattr(self, f"_{module}"):
-                text += "from %(module)s import %(submodules)s\n" % {
-                    "module": module,
-                    "submodules": ", ".join(getattr(self, f"_{module}"))}
-
-        text += "\n"
-
-        for module in self._internal_libs:
-            if getattr(self, f"_{module}"):
-                text += "from pysd.py_backend.%(module)s import %(methods)s\n"\
-                        % {
-                            "module": module,
-                            "methods": ", ".join(getattr(self, f"_{module}"))}
-
-        text += "from pysd import Component\n"
-
-        return text
+        pass

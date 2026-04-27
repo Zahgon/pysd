@@ -21,17 +21,12 @@ class Cache(object):
         @wraps(func)
         def cached_func(*args):
             """ Cache function """
-            try:
-                return self.data[func.__name__]
-            except KeyError:
-                value = func(*args)
-                self.data[func.__name__] = value
-                return value
+            pass
         return cached_func
 
     def clean(self):
         """ Cleans the cache """
-        self.data = {}
+        pass
 
 
 def constant_cache(function, *args):
@@ -40,11 +35,4 @@ def constant_cache(function, *args):
     The original function is saved in 'function' attribuite so we can
     recover it later.
     """
-    function.function = function
-    function.value = function(*args)
-
-    @wraps(function)
-    def wrapper(*args):
-        return function.value
-
-    return wrapper
+    pass

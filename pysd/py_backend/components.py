@@ -26,24 +26,7 @@ class Component(object):
         """
         This decorators allows assigning metadata to a function.
         """
-        def decorator(function):
-            function.name = name
-            function.units = units
-            function.limits = limits
-            function.subscripts = subscripts
-            function.type = comp_type
-            function.subtype = comp_subtype
-            function.args = inspect.getfullargspec(function)[0]
-
-            # include component in namespace and dependencies
-            self.namespace[name] = function.__name__
-            if function.__name__ != "time":
-                self.dependencies[function.__name__] = depends_on
-                self.dependencies.update(other_deps)
-
-            return function
-
-        return decorator
+        pass
 
 
 class Components(object):
@@ -70,25 +53,7 @@ class Components(object):
             The imported file content.
 
         """
-        # need a unique identifier for the imported module.
-        module_name = os.path.splitext(py_model_file)[0]\
-            + str(random.randint(0, 1000000))
-        try:
-            spec = importlib.util.spec_from_file_location(
-                module_name, py_model_file)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            return module
-        except TypeError:
-            raise ImportError(
-                "\n\nNot able to import the model. "
-                + "This may be because the model was compiled with an "
-                + "earlier version of PySD, you can check on the top of "
-                + "the model file you are trying to load."
-                + "\nThe current version of PySd is :"
-                + "\n\tPySD " + __version__ + "\n\n"
-                + "Please translate again the model with the function"
-                + " read_vensim or read_xmile.")
+        pass
 
     def __getattribute__(self, name):
         """
@@ -116,11 +81,7 @@ class Components(object):
         """
         Replaces the previous setter.
         """
-        setattr(
-            object.__getattribute__(self, "_components"),
-            name,
-            value
-        )
+        pass
 
 
 class Time(object):
@@ -138,33 +99,17 @@ class Time(object):
 
     def export(self):
         """Exports time values to a dictionary."""
-        return {
-            "control_vars": self._get_control_vars(),
-            "stage": self.stage,
-            "_time": self._time,
-            "return_timestamps": self.return_timestamps,
-            "_next_return": self._next_return
-        }
+        pass
 
     def _get_control_vars(self):
         """
         Make control vars changes exportable.
         """
-        out = {}
-        for cvar, value in self._control_vars_tracker.items():
-            if callable(value):
-                out[cvar] = value()
-            else:
-                out[cvar] = value
-        return out
+        pass
 
     def _set_time(self, time_dict):
         """Copy values from other Time object, used by Model.copy"""
-        self.set_control_vars(**time_dict['control_vars'])
-        for key, value in time_dict.items():
-            if key == 'control_vars':
-                continue
-            setattr(self, key, value)
+        pass
 
     def set_control_vars(self, **kwargs):
         """
@@ -183,34 +128,14 @@ class Time(object):
                 Saveper.
 
         """
-        # filter None values
-        kwargs = {
-                key: value for key, value in kwargs.items()
-                if value is not None
-        }
-        # track changes
-        self._control_vars_tracker.update(kwargs)
-        self._set_control_vars(**kwargs)
+        pass
 
     def _set_control_vars(self, **kwargs):
         """
         Set the control variables values. Private version to be used
         to avoid tracking changes.
         """
-        def _convert_value(value):
-            # this function is necessary to avoid copying the pointer in the
-            # lambda function.
-            if callable(value):
-                return value
-            else:
-                return lambda: value
-
-        for key, value in kwargs.items():
-            setattr(self, key, _convert_value(value))
-
-        if "initial_time" in kwargs:
-            self._initial_time = self.initial_time()
-            self._time = self.initial_time()
+        pass
 
     def in_bounds(self):
         """
@@ -222,67 +147,28 @@ class Time(object):
             True if time is smaller than final time. Otherwise, returns Fase.
 
         """
-        return self._time + self.time_step()*self.rprec < self.final_time()
+        pass
 
     def in_return(self):
         """ Check if current time should be returned """
-        prec = self.time_step() * self.rprec
-
-        if self.return_timestamps is not None:
-            # this allows managing float precision error
-            if self._next_return is None:
-                return False
-            if np.isclose(self._time, self._next_return, prec):
-                self._update_next_return()
-                return True
-            else:
-                while self._next_return is not None\
-                      and self._time > self._next_return:
-                    warn(
-                        f"The returning time stamp '{self._next_return}' "
-                        "seems to not be a multiple of the time step. "
-                        "This value will not be saved in the output. "
-                        "Please, modify the returning timestamps or the "
-                        "integration time step to avoid this."
-                        )
-                    self._update_next_return()
-                return False
-
-        time_delay = self._time - self._initial_time
-        save_per = self.saveper()
-        return time_delay % save_per < prec or -time_delay % save_per < prec
+        pass
 
     def round(self):
         """ Return rounded time to outputs to avoid float precision error"""
-        return np.round(
-            self._time,
-            -int(np.log10(self.time_step()*self.rprec)))
+        pass
 
     def add_return_timestamps(self, return_timestamps):
         """ Add return timestamps """
-        if hasattr(return_timestamps, '__len__')\
-           and len(return_timestamps) > 0:
-            self.return_timestamps = list(return_timestamps)
-            self.return_timestamps.sort(reverse=True)
-            self._next_return = self.return_timestamps.pop()
-        elif isinstance(return_timestamps, (float, int)):
-            self._next_return = return_timestamps
-            self.return_timestamps = []
-        else:
-            self._next_return = None
-            self.return_timestamps = None
+        pass
 
     def update(self, value):
         """ Update current time value """
-        self._time = value
+        pass
 
     def _update_next_return(self):
         """ Update the next_return value """
-        if self.return_timestamps:
-            self._next_return = self.return_timestamps.pop()
-        else:
-            self._next_return = None
+        pass
 
     def reset(self):
         """ Reset time value to the initial """
-        self._time = self._initial_time
+        pass

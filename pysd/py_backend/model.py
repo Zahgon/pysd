@@ -181,28 +181,28 @@ class Macro(DynamicStateful):
         """
         The documentation of the model.
         """
-        return self._doc.copy()
+        pass
 
     @property
     def namespace(self) -> dict:
         """
         The namespace dictionary of the model.
         """
-        return self._namespace.copy()
+        pass
 
     @property
     def dependencies(self) -> dict:
         """
         The dependencies dictionary of the model.
         """
-        return self._dependencies.copy()
+        pass
 
     @property
     def subscripts(self) -> dict:
         """
         The subscripts dictionary of the model.
         """
-        return self._subscript_dict.copy()
+        pass
 
     @property
     def modules(self) -> Union[dict, None]:
@@ -210,92 +210,25 @@ class Macro(DynamicStateful):
         The dictionary of modules of the model. If the model is not
         split by modules it returns None.
         """
-        return self._modules.copy() or None
+        pass
 
     def clean_caches(self):
         """
         Clean the cache of the object and the macros objects that it
         contains
         """
-        self.cache.clean()
-        # if nested macros
-        [macro.clean_caches() for macro in self._macro_elements]
+        pass
 
     def _get_data(self, data_files, encoding):
         """Load Data for TabData objects"""
-        if isinstance(data_files, dict):
-            for data_file, vars in data_files.items():
-                if isinstance(encoding, dict):
-                    encoding_df = encoding.get(data_file, None)
-                else:
-                    encoding_df = encoding
-                for var in vars:
-                    found = False
-                    for element in self._data_elements:
-                        if var in [element.py_name, element.real_name]:
-                            element.load_data(data_file, encoding_df)
-                            found = True
-                            break
-                    if not found:
-                        raise ValueError(
-                            f"'{var}' not found as model data variable")
-
-        else:
-            for element in self._data_elements:
-                element.load_data(data_files, encoding)
+        pass
 
     def _get_initialize_order(self):
         """
         Get the initialization order of the stateful elements
         and their the full dependencies.
         """
-        # get the full set of dependencies to initialize an stateful object
-        # includying all levels
-        self.stateful_initial_dependencies = {
-            ext: set()
-            for ext in self._dependencies
-            if (ext.startswith("_") and not ext.startswith("_active_initial_"))
-        }
-        for element in self.stateful_initial_dependencies:
-            self._get_full_dependencies(
-                element, self.stateful_initial_dependencies[element],
-                "initial")
-
-        # get the full dependencies of stateful objects taking into account
-        # only other objects
-        current_deps = {
-            element: [
-                dep for dep in deps
-                if dep in self.stateful_initial_dependencies
-            ] for element, deps in self.stateful_initial_dependencies.items()
-        }
-
-        # get initialization order of the stateful elements
-        self.initialize_order = []
-        delete = True
-        while delete:
-            delete = []
-            for element in current_deps:
-                if not current_deps[element]:
-                    # if stateful element has no deps on others
-                    # add to the queue to initialize
-                    self.initialize_order.append(element)
-                    delete.append(element)
-                    for element2 in current_deps:
-                        # remove dependency on the initialized element
-                        if element in current_deps[element2]:
-                            current_deps[element2].remove(element)
-            # delete visited elements
-            for element in delete:
-                del current_deps[element]
-
-        if current_deps:
-            # if current_deps is not an empty set there is a circular
-            # reference between stateful objects
-            raise ValueError(
-                'Circular initialization...\n'
-                + 'Not able to initialize the following objects:\n\t'
-                + '\n\t'.join(current_deps))
+        pass
 
     def _get_full_dependencies(self, element, dep_set, stateful_deps):
         """
@@ -317,72 +250,22 @@ class Macro(DynamicStateful):
         None
 
         """
-        deps = self._dependencies[element]
-        if element.startswith("_"):
-            deps = deps[stateful_deps]
-        for dep in deps:
-            if dep not in dep_set and not dep.startswith("__")\
-               and dep != "time":
-                dep_set.add(dep)
-                self._get_full_dependencies(dep, dep_set, stateful_deps)
+        pass
 
     def _add_constant_cache(self):
-        for element, cache_type in self.cache_type.items():
-            if cache_type == "run":
-                self.components._set_component(
-                    element,
-                    constant_cache(getattr(self.components, element))
-                )
-                self._constant_funcs.add(element)
+        pass
 
     def _remove_constant_cache(self):
-        for element in self._constant_funcs:
-            self.components._set_component(
-                element,
-                getattr(self.components, element).function)
-            # remove attributes added with constant cache
-            delattr(getattr(self.components, element), 'function')
-            delattr(getattr(self.components, element), 'value')
-        self._constant_funcs.clear()
+        pass
 
     def _assign_cache_type(self):
         """
         Assigns the cache type to all the elements from the namespace.
         """
-        self.cache_type = {"time": None}
-
-        for element in self._namespace.values():
-            if element not in self.cache_type\
-               and element in self._dependencies:
-                self._assign_cache(element)
-
-        for element, cache_type in self.cache_type.items():
-            if cache_type is not None:
-                if element not in self.cache.cached_funcs\
-                   and self._count_calls(element) > 1:
-                    self.components._set_component(
-                        element,
-                        self.cache(getattr(self.components, element)))
-                    self.cache.cached_funcs.add(element)
+        pass
 
     def _count_calls(self, element):
-        n_calls = 0
-        for subelement in self._dependencies:
-            if subelement.startswith("_") and\
-               element in self._dependencies[subelement]["step"]:
-                if element in\
-                   self._dependencies[subelement]["initial"]:
-                    n_calls +=\
-                        2*self._dependencies[subelement]["step"][element]
-                else:
-                    n_calls +=\
-                        self._dependencies[subelement]["step"][element]
-            elif (not subelement.startswith("_") and
-                  element in self._dependencies[subelement]):
-                n_calls +=\
-                    self._dependencies[subelement][element]
-
-        return n_calls
+        pass
 
     def _assign_cache(self, element):
         """
@@ -399,23 +282,7 @@ class Macro(DynamicStateful):
         None
 
         """
-        if not self._dependencies[element]:
-            self.cache_type[element] = "run"
-        elif "__lookup__" in self._dependencies[element]:
-            self.cache_type[element] = None
-        elif self._isdynamic(self._dependencies[element]):
-            self.cache_type[element] = "step"
-        else:
-            self.cache_type[element] = "run"
-            for subelement in self._dependencies[element]:
-                if subelement.startswith("_initial_")\
-                   or subelement.startswith("__"):
-                    continue
-                if subelement not in self.cache_type:
-                    self._assign_cache(subelement)
-                if self.cache_type[subelement] == "step":
-                    self.cache_type[element] = "step"
-                    break
+        pass
 
     def _isdynamic(self, dependencies):
         """
@@ -431,67 +298,32 @@ class Macro(DynamicStateful):
             True if 'time' or a dynamic stateful objects is in dependencies.
 
         """
-        if "time" in dependencies:
-            return True
-        for dep in dependencies:
-            if dep.startswith("_") and not dep.startswith("_initial_")\
-               and not dep.startswith("__"):
-                return True
-        return False
+        pass
 
     def get_pysd_compiler_version(self):
         """
         Returns the version of pysd complier that used for generating
         this model
         """
-        return self.components.__pysd_version__
+        pass
 
     def initialize(self):
         """
         This function initializes the external objects and stateful objects
         in the given order.
         """
-        # Initialize time
-        if self.time is None:
-            self.time = self.time_initialization()
-
-        # Reset time to the initial one
-        self.time.reset()
-        self.cache.clean()
-
-        self.components._init_outer_references({
-            'scope': self,
-            'time': self.time
-        })
-
-        if not self.lookups_loaded:
-            # Initialize HardcodedLookups elements
-            for element in self._lookup_elements:
-                element.initialize()
-
-            self.lookups_loaded = True
-
-        if not self.external_loaded:
-            # Initialize external elements
-            self.initialize_external_data()
-
-        # Initialize stateful objects
-        for element_name in self.initialize_order:
-            self._stateful_elements[element_name].initialize()
+        pass
 
     def ddt(self):
-        return np.array([component.ddt() for component
-                         in self._dynamicstateful_elements], dtype=object)
+        pass
 
     @property
     def state(self):
-        return np.array([component.state for component
-                         in self._dynamicstateful_elements], dtype=object)
+        pass
 
     @state.setter
     def state(self, new_value):
-        [component.update(val) for component, val
-         in zip(self._dynamicstateful_elements, new_value)]
+        pass
 
     def initialize_external_data(self, externals=None):
 
@@ -527,54 +359,7 @@ class Macro(DynamicStateful):
         the optional dependency `netCDF4`.
 
         """
-
-        if not externals:
-            for ext in self._external_elements:
-                ext.initialize()
-
-            # Remove Excel data from memory
-            Excels.clean()
-
-            self.external_loaded = True
-
-            return
-
-        externals = Path(externals)
-
-        if not externals.is_file():
-            raise FileNotFoundError(f"Invalid file path ({str(externals)})")
-
-        try:
-            ds = xr.open_dataset(externals)
-        except ValueError:  # pragma: no cover
-            raise ModuleNotFoundError("No module named 'netCDF4'")
-
-        for ext in self._external_elements:
-            if ext.py_name in ds.data_vars.keys():
-                # Initialize external from nc file
-                da = ds.data_vars[ext.py_name]
-                if isinstance(ext, ExtData):
-                    # Rename again time dimension
-                    time_dim = [dim for dim in da.dims if dim.startswith(
-                        "time_#")][0]
-                    da = da.rename({time_dim: "time"})
-                elif isinstance(ext, ExtLookup):
-                    # Rename again lookup_dim dimension
-                    lookup_dim = [dim for dim in da.dims if dim.startswith(
-                        "lookup_dim_#")][0]
-                    da = da.rename({lookup_dim: "lookup_dim"})
-                # Assign the value
-                if da.dims:
-                    ext.data = da
-                else:
-                    ext.data = float(da.data)
-            else:
-                # Initialize external from original file
-                ext.initialize()
-
-        Excels.clean()
-
-        self.external_loaded = True
+        pass
 
     def serialize_externals(self, export_path="externals.nc",
                             include_externals="all", exclude_externals=None):
@@ -626,81 +411,7 @@ class Macro(DynamicStateful):
         dependency `netCDF4`.
 
         """
-        data = {}
-        metadata = {}
-
-        lookup_dims = utils.UniqueDims("lookup_dim")
-        data_dims = utils.UniqueDims("time")
-
-        if isinstance(export_path, str):
-            export_path = Path(export_path)
-
-        if not include_externals:
-            raise ValueError("include_externals argument must not be None.")
-
-        # Generate a Dataframe to make simpler the search of external
-        # objects to include
-        # TODO include also checking the original name
-        py_names = []
-        externals_dict = {"py_var_name": [], "file": [], "ext": []}
-        for ext in self._external_elements:
-            py_names.append(ext.py_name)
-            externals_dict["py_var_name"].append(
-                self.__get_varname_from_ext_name(ext.py_name))
-            externals_dict["file"].append(set(ext.files))
-            externals_dict["ext"].append(ext)
-        exts_df = pd.DataFrame(index=py_names, data=externals_dict)
-
-        if include_externals != "all":
-            if not isinstance(include_externals, (list, set)):
-                raise TypeError(
-                    "include_externals must be 'all', or a list, or a set.")
-
-            # subset only to the externals to include
-            exts_df = exts_df[[
-                name in include_externals
-                or var_name in include_externals
-                or bool(file.intersection(include_externals))
-                for name, (var_name, file)
-                in exts_df[["py_var_name", "file"]].iterrows()
-            ]]
-
-        if exclude_externals:
-            if not isinstance(exclude_externals, (list, set)):
-                raise TypeError("exclude_externals must be a list or a set.")
-
-            # subset only to the externals to include
-            exts_df = exts_df[[
-                name not in exclude_externals
-                and var_name not in exclude_externals
-                and not bool(file.intersection(exclude_externals))
-                for name, (var_name, file)
-                in exts_df[["py_var_name", "file"]].iterrows()
-            ]]
-
-        for _, (ext, var_name) in exts_df[["ext", "py_var_name"]].iterrows():
-            self.__include_for_serialization(
-                ext, var_name, data, metadata, lookup_dims, data_dims
-            )
-
-        # create description to be used as global attribute of the dataset
-        description = {
-            "description": f"External objects for {self.py_model_file} "
-                           f"exported on {time.ctime(time.time())} "
-                           f"using PySD version {__version__}"
-        }
-
-        # create Dataset
-        ds = xr.Dataset(data_vars=data, attrs=description)
-
-        # add data_vars attributes
-        for key, values in metadata.items():
-            ds[key].attrs = values
-
-        try:
-            ds.to_netcdf(export_path)
-        except KeyError:  # pragma: no cover
-            raise ModuleNotFoundError("No module named 'netCDF4'")
+        pass
 
     def __include_for_serialization(self, ext, py_name_clean, data, metadata,
                                     lookup_dims, data_dims):
@@ -747,37 +458,7 @@ class Macro(DynamicStateful):
         None
 
         """
-        ext.initialize()
-
-        # collecting variable metadata from model._doc
-        var_meta = {
-            col:
-            self._doc.loc[self._doc["Py Name"] == py_name_clean, col].values[0]
-            or "Missing"
-            for col in self._doc.columns
-        }
-        var_meta["files"] = ";".join(ext.files)
-        var_meta["tabs"] = ";".join(ext.tabs)
-        var_meta["cells"] = ";".join(ext.cells)
-        # TODO: add also time_row_or_cols
-
-        da = ext.data
-
-        # Renaming shared dims by all ExtData ("time") and ExtLookup
-        # ("lookup_dim") external objects
-        if isinstance(ext, ExtData):
-            new_name = data_dims.name_new_dim("time", da.coords["time"].values)
-            da = da.rename({"time": new_name})
-        if isinstance(ext, ExtLookup):
-            new_name = lookup_dims.name_new_dim("lookup_dim",
-                                                da.coords["lookup_dim"].values)
-            da = da.rename({"lookup_dim": new_name})
-
-        metadata.update({ext.py_name: var_meta})
-        data.update({ext.py_name: da})
-
-        # TODO use a logger
-        print(f"Finished processing variable {py_name_clean}.")
+        pass
 
     def __get_varname_from_ext_name(self, varname):
         """
@@ -797,18 +478,7 @@ class Macro(DynamicStateful):
             Name of the variable that calls the variable with name varname.
 
         """
-        for var, deps in self._dependencies.items():
-            for _, ext_name in deps.items():
-                if varname == ext_name:
-                    return var
-
-        warnings.warn(
-            f"No variable depends upon '{varname}'. This is likely due "
-            f"to the fact that '{varname}' is defined using a mix of "
-            "DATA and CONSTANT. Though Vensim allows it, it is "
-            "not recommended."
-        )
-        return "_".join(varname.split("_")[3:])
+        pass
 
     def get_args(self, param):
         """
@@ -834,24 +504,7 @@ class Macro(DynamicStateful):
         :func:`pysd.py_backend.model.Macro.get_coords`
 
         """
-        if isinstance(param, str):
-            func_name = utils.get_key_and_value_by_insensitive_key_or_value(
-                param,
-                self._namespace)[1] or param
-
-            func = getattr(self.components, func_name)
-        else:
-            func = param
-
-        if hasattr(func, 'args'):
-            # cached functions
-            return func.args
-        else:
-            # regular functions
-            args = inspect.getfullargspec(func)[0]
-            if 'self' in args:
-                args.remove('self')
-            return args
+        pass
 
     def get_coords(self, param):
         """
@@ -878,32 +531,7 @@ class Macro(DynamicStateful):
         :func:`pysd.py_backend.model.Macro.get_args`
 
         """
-        if isinstance(param, str):
-            func_name = utils.get_key_and_value_by_insensitive_key_or_value(
-                param,
-                self._namespace)[1] or param
-
-            func = getattr(self.components, func_name)
-
-        else:
-            func = param
-
-        if hasattr(func, "subscripts"):
-            dims = func.subscripts
-            if not dims:
-                return None
-            coords = {dim: self.components._subscript_dict[dim]
-                      for dim in dims}
-            return coords, dims
-        elif hasattr(func, "state") and isinstance(func.state, xr.DataArray):
-            value = func()
-        else:
-            return None
-
-        dims = list(value.dims)
-        coords = {coord: list(value.coords[coord].values)
-                  for coord in value.coords}
-        return coords, dims
+        pass
 
     def __getitem__(self, param):
         """
@@ -966,26 +594,7 @@ class Macro(DynamicStateful):
         >>> model['Room temperature']
 
         """
-        func_name = utils.get_key_and_value_by_insensitive_key_or_value(
-            param,
-            self._namespace)[1] or param
-
-        if func_name.startswith("_ext_"):
-            return getattr(self.components, func_name).data
-        elif "__data__" in self._dependencies[func_name]:
-            return getattr(
-                self.components,
-                self._dependencies[func_name]["__data__"]
-            ).data
-        elif "__lookup__" in self._dependencies[func_name]:
-            return getattr(
-                self.components,
-                self._dependencies[func_name]["__lookup__"]
-            ).data
-        else:
-            raise ValueError(
-                "Trying to get the values of a constant variable. "
-                "'model.get_series_data' only works lookups/data objects.\n\n")
+        pass
 
     def set_components(self, params):
         """
@@ -1051,146 +660,22 @@ class Macro(DynamicStateful):
         :func:`pysd.py_backend.model.Macro.get_args`
 
         """
-        self._components_setter_tracker.update(params)
-        self._set_components(params, new=False)
+        pass
 
     def _set_components(self, params, new):
         """
         Set the value of exogenous model elements, giving the option to
         set new components (used in Macros).
         """
-
-        for key, value in params.items():
-            func_name = utils.get_key_and_value_by_insensitive_key_or_value(
-                key,
-                self._namespace)[1]
-
-            if isinstance(value, np.ndarray) or isinstance(value, list):
-                raise TypeError(
-                    'When setting ' + key + '\n'
-                    'Setting subscripted must be done using a xarray.DataArray'
-                    ' with the correct dimensions or a constant value '
-                    '(https://pysd.readthedocs.io/en/master/'
-                    'getting_started.html)')
-
-            if func_name is None:
-                raise NameError(
-                    "\n'%s' is not recognized as a model component."
-                    % key)
-
-            if new:
-                func = None
-                dims = None
-            else:
-                func = getattr(self.components, func_name)
-                _, dims = self.get_coords(func) or (None, None)
-
-            # if the variable is a lookup or a data we perform the change in
-            # the object they call
-            func_type = getattr(func, "type", None)
-            if func_type in ["Lookup", "Data"]:
-                # getting the object from original dependencies
-                obj = self._dependencies[func_name][f"__{func_type.lower()}__"]
-                getattr(
-                    self.components,
-                    obj
-                ).set_values(value)
-
-                if not isinstance(value, pd.Series):
-                    warnings.warn(
-                        "Replacing interpolation data with constant values.")
-
-                # Update dependencies
-                if func_type == "Data":
-                    if isinstance(value, pd.Series):
-                        self._dependencies[func_name] = {
-                            "time": 1, "__data__": obj
-                        }
-                    else:
-                        self._dependencies[func_name] = {"__data__": obj}
-
-                continue
-
-            if func_type == "Stateful":
-                warnings.warn(
-                    "Replacing the value of Stateful variable with "
-                    "an expression. To set initial conditions use "
-                    "`set_initial_condition` instead..."
-                )
-
-            if isinstance(value, pd.Series):
-                if func_type == "Constant":
-                    warnings.warn(
-                        "Replacing a constant value with a "
-                        "time-dependent value. The value will be "
-                        "interpolated over time."
-                    )
-                new_function, deps = self._timeseries_component(
-                    value, dims)
-                self._dependencies[func_name] = deps
-            elif callable(value):
-                if func_type == "Constant":
-                    warnings.warn(
-                        "Replacing a constant value with a callable. "
-                        "The value may not be constant anymore."
-                    )
-                new_function = value
-                # Using step cache adding time as dependency
-                # TODO it would be better if we can parse the content
-                # of the function to get all the dependencies
-                self._dependencies[func_name] = {"time": 1}
-
-            else:
-                if func_type != "Constant":
-                    warnings.warn("Replacing a variable by a constant value.")
-                new_function = self._constant_component(value, dims)
-                self._dependencies[func_name] = {}
-
-            # copy attributes from the original object to proper working
-            # of internal functions
-            new_function.__name__ = func_name
-            new_function.__dict__.update(getattr(func, "__dict__", {}))
-            # set the new function
-            self.components._set_component(func_name, new_function)
-            if func_name in self.cache.cached_funcs:
-                self.cache.cached_funcs.remove(func_name)
+        pass
 
     def _timeseries_component(self, series, dims):
         """ Internal function for creating a timeseries model element """
-        # this is only called if the set_component function recognizes a
-        # pandas series
-        # TODO: raise a warning if extrapolating from the end of the series.
-        # TODO: data type variables should be creted using a Data object
-        # lookup type variables should be created using a Lookup object
-
-        if isinstance(series.values[0], xr.DataArray):
-            # the interpolation will be time dependent
-            return lambda: utils.rearrange(xr.concat(
-                series.values,
-                series.index).interp(concat_dim=self.time()).reset_coords(
-                'concat_dim', drop=True),
-                dims, self._subscript_dict), {'time': 1}
-
-        elif dims:
-            # the interpolation will be time dependent
-            return lambda: utils.rearrange(
-                float(np.interp(self.time(), series.index, series.values)),
-                dims, self._subscript_dict), {'time': 1}
-
-        else:
-            # the interpolation will be time dependent
-            return lambda: float(np.interp(
-                self.time(), series.index, series.values
-                )), {'time': 1}
+        pass
 
     def _constant_component(self, value, dims):
         """ Internal function for creating a constant model element """
-        if dims:
-            return lambda: utils.rearrange(
-                value, dims, self._subscript_dict)
-
-        else:
-            return lambda: value
+        pass
 
     def set_initial_value(self, time, initial_value):
         """
@@ -1211,92 +696,14 @@ class Macro(DynamicStateful):
         :func:`pysd.py_backend.model.Model.set_initial_condition`
 
         """
-        self.time.set_control_vars(initial_time=time)
-        stateful_name = "_NONE"
-        modified_statefuls = set()
-
-        for key, value in initial_value.items():
-            component_name =\
-                utils.get_key_and_value_by_insensitive_key_or_value(
-                    key, self._namespace)[1]
-            if component_name is not None:
-                if self._dependencies[component_name]:
-                    deps = list(self._dependencies[component_name])
-                    if len(deps) == 1 and deps[0] in self.initialize_order:
-                        stateful_name = deps[0]
-            else:
-                component_name = key
-                stateful_name = key
-
-            try:
-                _, dims = self.get_coords(component_name)
-            except TypeError:
-                dims = None
-
-            if isinstance(value, xr.DataArray)\
-               and not set(value.dims).issubset(set(dims)):
-                raise ValueError(
-                    f"\nInvalid dimensions for {component_name}."
-                    f"It should be a subset of {dims}, "
-                    f"but passed value has {list(value.dims)}")
-
-            if isinstance(value, np.ndarray) or isinstance(value, list):
-                raise TypeError(
-                    'When setting ' + key + '\n'
-                    'Setting subscripted must be done using a xarray.DataArray'
-                    ' with the correct dimensions or a constant value '
-                    '(https://pysd.readthedocs.io/en/master/'
-                    'getting_started.html)')
-
-            # Try to update stateful component
-            try:
-                element = getattr(self.components, stateful_name)
-                if dims:
-                    value = utils.rearrange(
-                        value, dims,
-                        self._subscript_dict)
-                element.initialize(value)
-                modified_statefuls.add(stateful_name)
-            except NameError:
-                # Try to override component
-                raise ValueError(
-                    f"\nUnrecognized stateful '{component_name}'. If you want"
-                    " to set a value of a regular component. Use params={"
-                    f"'{component_name}': {value}" + "} instead.")
-
-        self.clean_caches()
-
-        # get the elements to initialize
-        elements_to_initialize =\
-            self._get_elements_to_initialize(modified_statefuls)
-
-        # Initialize remaining stateful objects
-        for element_name in self.initialize_order:
-            if element_name in elements_to_initialize:
-                self._stateful_elements[element_name].initialize()
+        pass
 
     def _get_elements_to_initialize(self, modified_statefuls):
-        elements_to_initialize = set()
-        for stateful, deps in self.stateful_initial_dependencies.items():
-            if stateful in modified_statefuls:
-                # if elements initial conditions have been modified
-                # we should not modify it
-                continue
-            for modified_sateteful in modified_statefuls:
-                if modified_sateteful in deps:
-                    # if element has dependencies on a modified element
-                    # we should re-initialize it
-                    elements_to_initialize.add(stateful)
-                    continue
-
-        return elements_to_initialize
+        pass
 
     def export(self):
         """Exports stateful values to a dictionary."""
-        return {
-            name: element.export()
-            for name, element in self._stateful_elements.items()
-        }
+        pass
 
     def _set_stateful(self, stateful_dict):
         """
@@ -1308,15 +715,7 @@ class Macro(DynamicStateful):
           Dictionary of the stateful elements and the attributes to change.
 
         """
-        for element, attrs in stateful_dict.items():
-            component = getattr(self.components, element)
-            if hasattr(component, '_set_stateful'):
-                component._set_stateful(attrs)
-            else:
-                [
-                    setattr(component, attr, value)
-                    for attr, value in attrs.items()
-                ]
+        pass
 
     def _build_doc(self):
         """
@@ -1333,24 +732,7 @@ class Macro(DynamicStateful):
                 - Units string
                 - Documentation strings from the original model file
         """
-        collector = []
-        for name, pyname in self._namespace.items():
-            element = getattr(self.components, pyname)
-            collector.append({
-                'Real Name': name,
-                'Py Name': pyname,
-                'Subscripts': element.subscripts,
-                'Units': element.units,
-                'Limits': element.limits,
-                'Type': element.type,
-                'Subtype': element.subtype,
-                'Comment': element.__doc__.strip().strip("\n").strip()
-                if element.__doc__ else None
-            })
-
-        return pd.DataFrame(
-            collector
-        ).sort_values(by="Real Name").reset_index(drop=True)
+        pass
 
     def __str__(self):
         """ Return model source files """
@@ -1434,9 +816,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.reload`
 
         """
-        self.time.stage = 'Initialization'
-        External.missing = self.missing_values
-        super().initialize()
+        pass
 
     def run(self, params=None, return_columns=None, return_timestamps=None,
             initial_condition='original', final_time=None, time_step=None,
@@ -1541,23 +921,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.reload`
 
         """
-        self._stepper_mode = False
-
-        if reload:
-            self.reload()
-
-        self._config_simulation(params, return_columns, return_timestamps,
-                                initial_condition, final_time, time_step,
-                                saveper, cache_output, progress=progress)
-
-        # instante output object
-        self.output = ModelOutput(output_file)
-        self.output.set_capture_elements(self.capture_elements)
-        self.output.initialize(self)
-
-        self._integrate()
-
-        return self.output.collect(self, flatten_output)
+        pass
 
     def set_stepper(self, output_obj, params=None, step_vars=[],
                     return_columns=None, return_timestamps=None,
@@ -1634,17 +998,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.step`
 
         """
-        self.output = output_obj
-
-        self._stepper_mode = True
-
-        self._config_simulation(params, return_columns, return_timestamps,
-                                initial_condition, final_time, time_step,
-                                saveper, cache_output, step_vars=step_vars)
-
-        self.output.set_capture_elements(self.capture_elements)
-        self.output.initialize(self)
-        self.output.update(self)
+        pass
 
     def step(self, num_steps=1, step_vars={}):
         """
@@ -1673,13 +1027,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.set_stepper`
 
         """
-        # TODO warn the user if we exceeded the final_time??
-        self._set_components(step_vars, new=False)
-
-        for _ in range(num_steps):
-            self._integrate_step()
-            if self.time.in_return():
-                self.output.update(self)
+        pass
 
     def _config_simulation(self, params, return_columns, return_timestamps,
                            initial_condition, final_time, time_step,
@@ -1688,50 +1036,7 @@ class Model(Macro):
         Internal method to set all simulation config parameters. Arguments
         to this function are those of the run and set_stepper methods.
         """
-        # set control var at the beginning in case they are needed to
-        # initialize any object
-        self._set_control_vars(return_timestamps, final_time, time_step,
-                               saveper)
-
-        if params:
-            self.set_components(params)
-
-        if self._stepper_mode:
-            for step_var in kwargs["step_vars"]:
-                self._dependencies[step_var]["time"] = 1
-
-        # update cache types after setting params
-        self._assign_cache_type()
-
-        # set initial conditions
-        self.set_initial_condition(initial_condition)
-        # set control vars again in case a pickle has been used
-        self._set_control_vars(return_timestamps, final_time, time_step,
-                               saveper)
-
-        # progressbar only makes sense when not running step by step
-        if not self._stepper_mode:
-            self.progress = self._set_progressbar(kwargs["progress"])
-
-        self.capture_elements = self._set_capture_elements(return_columns)
-
-        # include outputs in cache if needed
-        self._dependencies["OUTPUTS"] = {
-            element: 1 for element in self.capture_elements["step"]
-        }
-
-        if cache_output:
-            # udate the cache type taking into account the outputs
-            self._assign_cache_type()
-
-        # add constant cache to thosa variable that are constants
-        self._add_constant_cache()
-
-        # set Run mode
-        self.time.stage = 'Run'
-
-        # need to clean cache to remove the values from active_initial
-        self.clean_caches()
+        pass
 
     def _set_capture_elements(self, return_columns):
         """
@@ -1755,16 +1060,7 @@ class Model(Macro):
             Dictionary of list with keywords step and run.
 
         """
-        if return_columns is None or isinstance(return_columns, str):
-            return_columns = self._default_return_columns(return_columns)
-
-        capture_elements, self.return_addresses = utils.get_return_elements(
-            return_columns, self._namespace)
-
-        # create a dictionary splitting run cached and others
-        capture_elements = self._split_capture_elements(capture_elements)
-
-        return capture_elements
+        pass
 
     def _set_progressbar(self, progress):
         """
@@ -1778,30 +1074,11 @@ class Model(Macro):
         progress: bool
 
         """
-        if progress and (self.cache_type["final_time"] == "step" or
-                         self.cache_type["time_step"] == "step"):
-            warnings.warn(
-                "The progressbar is not compatible with dynamic "
-                "final time or time step. Both variables must be "
-                "constants to prompt progress."
-            )
-            progress = False
-
-        return progress
+        pass
 
     def _set_control_vars(self, return_timestamps, final_time, time_step,
                           saveper):
-        self.time.add_return_timestamps(return_timestamps)
-        if self.time.return_timestamps is not None and not final_time:
-            # if not final time given the model will end in the list
-            # return timestamp (the list is reversed for popping)
-            if self.time.return_timestamps:
-                final_time = self.time.return_timestamps[0]
-            else:
-                final_time = self.time._next_return
-
-        self.time.set_control_vars(
-            final_time=final_time, time_step=time_step, saveper=saveper)
+        pass
 
     def select_submodel(self, vars=[], modules=[], exogenous_components={},
                         inplace=True):
@@ -1882,103 +1159,10 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.get_dependencies`
 
         """
-        if inplace:
-            self._select_submodel(vars, modules, exogenous_components)
-        else:
-            return self.copy()._select_submodel(
-                vars, modules, exogenous_components)
+        pass
 
     def _select_submodel(self, vars, modules, exogenous_components={}):
-        self._submodel_tracker = {
-            "vars": vars,
-            "modules": modules
-        }
-        deps = self.get_dependencies(vars, modules)
-        warnings.warn(
-            "Selecting submodel, "
-            "to run the full model again use model.reload()")
-
-        # get set of all dependencies and all variables to select
-        all_deps = deps.d_deps["initial"].copy()
-        all_deps.update(deps.d_deps["step"])
-        all_deps.update(deps.d_deps["lookup"])
-
-        all_vars = all_deps.copy()
-        all_vars.update(deps.c_vars)
-
-        # clean dependendies and namespace dictionaries, and remove
-        # the rows from the documentation
-        for real_name, py_name in self._namespace.copy().items():
-            if py_name not in all_vars:
-                del self._namespace[real_name]
-                del self._dependencies[py_name]
-                self._doc.drop(
-                    self._doc.index[self._doc["Real Name"] == real_name],
-                    inplace=True
-                )
-
-        for py_name in self._dependencies.copy().keys():
-            if py_name.startswith("_") and py_name not in deps.s_deps:
-                del self._dependencies[py_name]
-
-        # remove active initial from s_deps as they are "fake" objects
-        # in dependencies
-        deps.s_deps = {
-            dep for dep in deps.s_deps if not dep.startswith("_active_initial")
-        }
-
-        # reassing the dictionary and lists of needed stateful objects
-        self._stateful_elements = {
-            name: getattr(self.components, name)
-            for name in deps.s_deps
-            if isinstance(getattr(self.components, name), Stateful)
-        }
-        self._dynamicstateful_elements = [
-            getattr(self.components, name) for name in deps.s_deps
-            if isinstance(getattr(self.components, name), DynamicStateful)
-        ]
-        self._macro_elements = [
-            getattr(self.components, name) for name in deps.s_deps
-            if isinstance(getattr(self.components, name), Macro)
-        ]
-
-        # keeping only needed external objects
-        ext_deps = set()
-        for values in self._dependencies.values():
-            if "__external__" in values:
-                ext_deps.add(values["__external__"])
-        self._external_elements = [
-            getattr(self.components, name) for name in ext_deps
-            if isinstance(getattr(self.components, name), External)
-        ]
-
-        # set all exogenous values to np.nan by default
-        new_components = {element: np.nan for element in all_deps}
-        # update exogenous values with the user input
-        [new_components.update(
-            {
-                utils.get_key_and_value_by_insensitive_key_or_value(
-                    key,
-                    self._namespace)[1]: value
-            }) for key, value in exogenous_components.items()]
-
-        self.set_components(new_components)
-
-        # show a warning message if exogenous values are needed for a
-        # dependency
-        new_components = [
-            key for key, value in new_components.items() if value is np.nan]
-        if new_components:
-            warnings.warn(
-                "Exogenous components for the following variables are "
-                f"necessary but not given:\n\t{', '.join(new_components)}"
-                "\n\n Please, set them before running the model using "
-                "set_components method...")
-
-        # re-assign the cache_type and initialization order
-        self._assign_cache_type()
-        self._get_initialize_order()
-        return self
+        pass
 
     def get_dependencies(self, vars=[], modules=[]):
         """
@@ -2042,46 +1226,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.get_vars_in_module`
 
         """
-        def check_dep(deps_obj, deps, initial=False):
-            for dep in deps:
-                if dep in deps_obj.c_vars or dep.startswith("__"):
-                    pass
-                elif dep.startswith("_"):
-                    deps_obj.s_deps.add(dep)
-                    dep = self._dependencies[dep]
-                    check_dep(deps_obj, dep["initial"], True)
-                    check_dep(deps_obj, dep["step"])
-                else:
-                    if initial and dep not in deps_obj.d_deps["step"]\
-                       and dep not in deps_obj.d_deps["lookup"]:
-                        deps_obj.d_deps["initial"].add(dep)
-                    else:
-                        if dep in deps_obj.d_deps["initial"]:
-                            deps_obj.d_deps["initial"].remove(dep)
-                        if self.get_args(dep):
-                            deps_obj.d_deps["lookup"].add(dep)
-                        else:
-                            deps_obj.d_deps["step"].add(dep)
-
-        dependencies = utils.Dependencies(
-            {"time", "time_step", "initial_time", "final_time", "saveper"},
-            {"initial": set(), "step": set(), "lookup": set()},
-            set()
-        )
-        for var in vars:
-            py_name = utils.get_key_and_value_by_insensitive_key_or_value(
-                    var,
-                    self._namespace)[1]
-            dependencies.c_vars.add(py_name)
-        for module in modules:
-            dependencies.c_vars.update(self.get_vars_in_module(module))
-
-        for var in dependencies.c_vars:
-            if var == "time":
-                continue
-            check_dep(dependencies, self._dependencies[var])
-
-        return dependencies
+        pass
 
     def get_vars_in_module(self, module):
         """
@@ -2102,34 +1247,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.get_dependencies`
 
         """
-        if self._modules:
-            module_content = self._modules.copy()
-        else:
-            raise ValueError(
-                "Trying to get a module from a non-modularized model")
-
-        try:
-            # get the module or the submodule content
-            for submodule in module.split("/"):
-                module_content = module_content[submodule]
-            module_content = [module_content]
-        except KeyError:
-            raise NameError(
-                f"Module or submodule '{submodule}' not found...\n")
-
-        vars, new_content = set(), []
-
-        while module_content:
-            # find the vars in the module or the submodule
-            for content in module_content:
-                if isinstance(content, list):
-                    vars.update(content)
-                else:
-                    [new_content.append(value) for value in content.values()]
-
-            module_content, new_content = new_content, []
-
-        return vars
+        pass
 
     def copy(self, reload=False):
         """
@@ -2160,35 +1278,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.reload`
 
         """
-        # initialize the new model?
-        initialize = self.time.stage != 'Load'
-        # create a new model
-        new_model = type(self)(
-            py_model_file=deepcopy(self.py_model_file),
-            data_files=deepcopy(self.data_files),
-            data_files_encoding=deepcopy(self.data_files_encoding),
-            initialize=initialize,
-            missing_values=deepcopy(self.missing_values)
-        )
-        if reload:
-            # return reloaded copy
-            return new_model
-        # copy the values of the stateful objects
-        if initialize:
-            new_model._set_stateful(deepcopy(super().export()))
-        # copy time object values
-        new_model.time._set_time(deepcopy(self.time.export()))
-        # set other components
-        with warnings.catch_warnings():
-            # filter warnings that have been already shown in original model
-            warnings.simplefilter("ignore")
-            # substract submodel
-            if self._submodel_tracker:
-                new_model._select_submodel(**self._submodel_tracker)
-            # copy modified parameters
-            new_model.set_components(self._components_setter_tracker)
-
-        return new_model
+        pass
 
     def reload(self):
         """
@@ -2201,10 +1291,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.initialize`
 
         """
-        self.__init__(self.py_model_file, data_files=self.data_files,
-                      data_files_encoding=self.data_files_encoding,
-                      initialize=True,
-                      missing_values=self.missing_values)
+        pass
 
     def _default_return_columns(self, which):
         """
@@ -2225,20 +1312,7 @@ class Model(Macro):
             List of columns to return
 
         """
-        if which == 'step':
-            types = ['step']
-        else:
-            types = ['step', 'run']
-
-        return_columns = []
-
-        for key, pykey in self._namespace.items():
-            if pykey in self.cache_type and self.cache_type[pykey] in types\
-               and not self.get_args(pykey):
-
-                return_columns.append(key)
-
-        return return_columns
+        pass
 
     def _split_capture_elements(self, capture_elements):
         """
@@ -2256,10 +1330,7 @@ class Model(Macro):
             Dictionary of list with keywords step and run.
 
         """
-        capture_dict = {'step': [], 'run': [], None: []}
-        [capture_dict[self.cache_type[element]].append(element)
-         for element in capture_elements]
-        return capture_dict
+        pass
 
     def set_initial_condition(self, initial_condition):
         """ Set the initial conditions of the integration.
@@ -2288,27 +1359,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Macro.set_initial_value`
 
         """
-        if isinstance(initial_condition, str)\
-           and initial_condition.lower() not in ["original", "o",
-                                                 "current", "c"]:
-            initial_condition = Path(initial_condition)
-
-        if isinstance(initial_condition, tuple):
-            self.initialize()
-            self.set_initial_value(*initial_condition)
-        elif isinstance(initial_condition, Path):
-            self.import_pickle(initial_condition)
-            self.time.set_control_vars(initial_time=self.time())
-        elif isinstance(initial_condition, str):
-            if initial_condition.lower() in ["original", "o"]:
-                self.time.set_control_vars(
-                    initial_time=self.components._control_vars["initial_time"])
-                self.initialize()
-        else:
-            raise TypeError(
-                "Invalid initial conditions. "
-                + "Check documentation for valid entries or use "
-                + "'help(model.set_initial_condition)'.")
+        pass
 
     def _euler_step(self, dt):
         """
@@ -2321,7 +1372,7 @@ class Model(Macro):
             This is the amount to increase time by this step
 
         """
-        self.state = self.state + self.ddt() * dt
+        pass
 
     def _integrate(self):
         """
@@ -2332,35 +1383,10 @@ class Model(Macro):
         None
 
         """
-
-        if self.progress:
-            # initialize progress bar
-            progressbar = utils.ProgressBar(
-                int((self.time.final_time()-self.time())/self.time.time_step())
-            )
-        else:
-            # when None is used the update will do nothing
-            progressbar = utils.ProgressBar(None)
-
-        # performs the time stepping
-        while self.time.in_bounds():
-            if self.time.in_return():
-                self.output.update(self)
-
-            self._integrate_step()
-            progressbar.update()
-
-        # need to add one more time step, because we run only the state
-        # updates in the previous loop and thus may be one short.
-        if self.time.in_return():
-            self.output.update(self)
-
-        progressbar.finish()
+        pass
 
     def _integrate_step(self):
-        self._euler_step(self.time.time_step())
-        self.time.update(self.time()+self.time.time_step())
-        self.clean_caches()
+        pass
 
     def export(self, file_name):
         """
@@ -2376,17 +1402,7 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.import_pickle`
 
         """
-        warnings.warn(
-            "\nCompatibility of exported states could be broken between"
-            " different versions of PySD or xarray, current versions:\n"
-            f"\tPySD {__version__}\n\txarray {xr.__version__}\n"
-        )
-        with open(file_name, 'wb') as file:
-            pickle.dump(
-                (self.time.export(),
-                 super().export(),
-                 {'pysd': __version__, 'xarray': xr.__version__}
-                 ), file)
+        pass
 
     def import_pickle(self, file_name):
         """
@@ -2402,18 +1418,4 @@ class Model(Macro):
         :func:`pysd.py_backend.model.Model.export_pickle`
 
         """
-        with open(file_name, 'rb') as file:
-            time_dict, stateful_dict, metadata = pickle.load(file)
-
-        if __version__ != metadata['pysd']\
-           or xr.__version__ != metadata['xarray']:  # pragma: no cover
-            warnings.warn(
-                "\nCompatibility of exported states could be broken between"
-                " different versions of PySD or xarray. Current versions:\n"
-                f"\tPySD {__version__}\n\txarray {xr.__version__}\n"
-                "Loaded versions:\n"
-                f"\tPySD {metadata['pysd']}\n\txarray {metadata['xarray']}\n"
-                )
-
-        self.time._set_time(time_dict)
-        self._set_stateful(stateful_dict)
+        pass

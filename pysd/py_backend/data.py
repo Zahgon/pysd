@@ -21,13 +21,7 @@ class Columns():
         """
         Read the columns from the data file or return the previously read ones
         """
-        file_name = Path(file_name)
-        if file_name in cls._files:
-            return cls._files[file_name]
-        else:
-            columns = cls.read_file(file_name, encoding)
-            cls._files[file_name] = columns
-            return columns
+        pass
 
     @classmethod
     def read_file(cls, file_name, encoding=None):
@@ -50,69 +44,21 @@ class Columns():
             to indicate if the output file is transposed.
 
         """
-        # in the most cases variables will be split per columns, then
-        # read the first row to have all the column names
-        out = cls.read_line(file_name, encoding)
-        if out is None:
-            raise ValueError(
-                f"\nNot able to read '{str(file_name)}'. "
-                + "Only '.csv', '.tab' files are accepted.")
-
-        transpose = False
-
-        try:
-            # if we fail converting columns to float then they are
-            # not numeric values, so current direction is okay
-            [float(col) for col in random.sample(out, min(3, len(out)))]
-            # we did not fail, read the first column to see if variables
-            # are split per rows
-            out = cls.read_col(file_name, encoding)
-            transpose = True
-            # if we still are able to transform values to float the
-            # file is not valid
-            [float(col) for col in random.sample(out, min(3, len(out)))]
-        except ValueError:
-            return out, transpose
-        else:
-            raise ValueError(
-                f"Invalid file format '{str(file_name)}'... varible names "
-                "should appear in the first row or in the first column...")
+        pass
 
     @classmethod
     def read_line(cls, file_name, encoding=None):
         """
         Read the firts row and return a set of it.
         """
-        if file_name.suffix.lower() == ".tab":
-            return list(pd.read_table(file_name,
-                                      nrows=0,
-                                      encoding=encoding,
-                                      dtype=str,
-                                      header=0).iloc[:, 1:])
-        elif file_name.suffix.lower() == ".csv":
-            return list(pd.read_csv(file_name,
-                                    nrows=0,
-                                    encoding=encoding,
-                                    dtype=str,
-                                    header=0).iloc[:, 1:])
-        else:
-            return None
+        pass
 
     @classmethod
     def read_col(cls, file_name, encoding=None):
         """
         Read the firts column and return a it.
         """
-        if file_name.suffix.lower() == ".tab":
-            return list(pd.read_table(file_name,
-                                      usecols=[0],
-                                      encoding=encoding,
-                                      dtype=str).iloc[:, 0].to_list())
-        elif file_name.suffix.lower() == ".csv":
-            return list(pd.read_csv(file_name,
-                                    usecols=[0],
-                                    encoding=encoding,
-                                    dtype=str).iloc[:, 0].to_list())
+        pass
 
     @classmethod
     def get_columns(cls, file_name, vars=None, encoding=None):
@@ -141,39 +87,14 @@ class Columns():
             not.
 
         """
-        if vars is None:
-            # Not var specified, return all available variables
-            return cls.read(file_name, encoding)
-
-        columns, transpose = cls.read(file_name, encoding)
-
-        vars_extended = []
-        for var in vars:
-            vars_extended.append(var)
-            if var.startswith('"') and var.endswith('"'):
-                # the variables in "" are reded without " by pandas
-                vars_extended.append(var[1:-1])
-
-        outs = set()
-        for var in columns:
-            if var in vars_extended:
-                # var is in vars_extended (no subscripts)
-                outs.add(var)
-                vars_extended.remove(var)
-            else:
-                for var1 in vars_extended:
-                    if var.startswith(var1 + "["):
-                        # var is subscripted
-                        outs.add(var)
-
-        return outs, transpose
+        pass
 
     @classmethod
     def clean(cls):
         """
         Clean the dictionary of read files
         """
-        cls._files = {}
+        pass
 
 
 class Data(object):
@@ -183,28 +104,7 @@ class Data(object):
 
     def set_values(self, values):
         """Set new values from user input"""
-        self.data = xr.DataArray(
-            np.nan, self.final_coords, list(self.final_coords))
-
-        if isinstance(values, pd.Series):
-            index = list(values.index)
-            index.sort()
-            self.data = self.data.expand_dims(
-                {'time': index}, axis=0).copy()
-
-            for index, value in values.items():
-                if isinstance(values.values[0], xr.DataArray):
-                    self.data.loc[index].loc[value.coords] = value
-                else:
-                    self.data.loc[index] = value
-        else:
-            if isinstance(values, xr.DataArray):
-                self.data.loc[values.coords] = values.values
-            else:
-                if self.final_coords:
-                    self.data.loc[:] = values
-                else:
-                    self.data = values
+        pass
 
     def __call__(self, time):
         try:
@@ -290,21 +190,7 @@ class TabData(Data):
             Resulting data array with the time in the first dimension.
 
         """
-        if isinstance(file_names, (str, Path)):
-            file_names = [file_names]
-        if isinstance(encoding, str) or encoding is None:
-            encoding = [encoding]*len(file_names)
-
-        for file_name, encoding_df in zip(file_names, encoding):
-            self.data = self._load_data(Path(file_name), encoding_df)
-            if self.data is not None:
-                break
-
-        if self.data is None:
-            raise ValueError(
-                f"_data_{self.py_name}\n"
-                f"Data for {self.real_name} not found in "
-                f"{', '.join([str(file_name) for file_name in file_names])}")
+        pass
 
     def _load_data(self, file_name, encoding):
         """
@@ -321,64 +207,4 @@ class TabData(Data):
             Resulting data array with the time in the first dimension.
 
         """
-        # TODO inlcude missing values managment as External objects
-        # get columns to load variable
-        if file_name.suffix in [".csv", ".tab"]:
-
-            columns, transpose = Columns.get_columns(
-                file_name,
-                vars=[self.real_name, self.py_name],
-                encoding=encoding
-            )
-
-            if not columns:
-                # the variable is not in the passed file
-                return None
-
-            if not self.coords:
-                # 0 dimensional data
-                self.nan = np.nan
-                values = load_outputs(file_name, transpose, columns=columns)
-                return xr.DataArray(
-                    values.iloc[:, 0].values,
-                    {'time': values.index.values},
-                    ['time'])
-
-            # subscripted data
-            dims = list(self.coords)
-
-            values = load_outputs(file_name, transpose, columns=columns)
-
-            self.nan = xr.DataArray(np.nan, self.coords, dims)
-            out = xr.DataArray(
-                np.nan,
-                {'time': values.index.values, **self.coords},
-                ['time'] + dims)
-
-            for column in values.columns:
-                coords = {
-                    dim: [coord]
-                    for (dim, coord)
-                    in zip(dims, re.split(r'\[|\]|\s*,\s*', column)[1:-1])
-                }
-                out.loc[coords] = np.expand_dims(
-                    values[column].values,
-                    axis=tuple(range(1, len(coords)+1))
-                )
-
-            return out
-
-        ds = xr.open_dataset(file_name)
-
-        if self.py_name in ds:
-            data = ds[self.py_name]
-            ds.close()
-
-            if (
-                "time" in data.dims
-                and list(self.coords).sort() == list(data.dims[1:]).sort()
-            ):
-                return data
-
-        ds.close()
-        return None
+        pass

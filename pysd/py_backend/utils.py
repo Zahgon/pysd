@@ -32,10 +32,7 @@ def xrsplit(array):
         List of shape 0 xarray.DataArrays with coordinates.
 
     """
-    sp_list = [sa for sa in array]
-    if sp_list[0].shape:
-        sp_list = [ssa for sa in sp_list for ssa in xrsplit(sa)]
-    return sp_list
+    pass
 
 
 def get_current_computer_time():
@@ -53,7 +50,7 @@ def get_current_computer_time():
         Current machine time.
 
     """
-    return datetime.now()
+    pass
 
 
 def get_return_elements(return_columns, namespace):
@@ -76,33 +73,7 @@ def get_return_elements(return_columns, namespace):
     return_addresses
 
     """
-    capture_elements = list()
-    return_addresses = dict()
-    for col in return_columns:
-        if col[0] == col[-1] and col[0] == '"':
-            name = col
-            address = None
-        elif "[" in col:
-            name, location = col.strip("]").split("[")
-            address = tuple([loc.strip() for loc in location.split(",")])
-        else:
-            name = col
-            address = None
-
-        if name in namespace:
-            py_name = namespace[name]
-        else:
-            if name in namespace.values():
-                py_name = name
-            else:
-                raise KeyError(name + " not found as model element")
-
-        if py_name not in capture_elements:
-            capture_elements += [py_name]
-
-        return_addresses[col] = (py_name, address)
-
-    return list(capture_elements), return_addresses
+    pass
 
 
 def compute_shape(coords, reshape_len=None, py_name=""):
@@ -135,26 +106,7 @@ def compute_shape(coords, reshape_len=None, py_name=""):
       Shape of the ordered dictionary or of the desired table or vector.
 
     """
-    if not reshape_len:
-        return [len(coord) for coord in coords.values()]
-
-    # get the shape of the coordinates bigger than 1
-    shape = [len(coord) for coord in coords.values() if len(coord) > 1]
-
-    shape_len = len(shape)
-
-    # return an error when the current shape is bigger than the requested one
-    if shape_len > reshape_len:
-        raise ValueError(
-            py_name
-            + "\n"
-            + "The shape of the coords to read in a "
-            + " external file must be at most "
-            + "{} dimensional".format(reshape_len)
-        )
-
-    # complete with 1s on the left
-    return [1] * (reshape_len - shape_len) + shape
+    pass
 
 
 def get_key_and_value_by_insensitive_key_or_value(key, dict):
@@ -176,12 +128,7 @@ def get_key_and_value_by_insensitive_key_or_value(key, dict):
         of Nones if the input key is not in the dictionary.
 
     """
-    lower_key = key.lower()
-    for real_key, real_value in dict.items():
-        if real_key.lower() == lower_key or real_value.lower() == lower_key:
-            return real_key, real_value
-
-    return None, None
+    pass
 
 
 def rearrange(data, dims, coords):
@@ -204,27 +151,7 @@ def rearrange(data, dims, coords):
     xarray.DataArray
 
     """
-    # subset used coords in general coords will be the subscript_dict
-    coords = {dim: coords[dim] for dim in dims}
-    if isinstance(data, xr.DataArray):
-        shape = tuple(compute_shape(coords))
-        if data.shape == shape:
-            # Allows switching dimensions names and transpositions
-            return xr.DataArray(data=data.values, coords=coords, dims=dims)
-        elif np.prod(shape) < np.prod(data.shape):
-            # Allows subscripting a subrange
-            return data.rename({
-                dim: new_dim for dim, new_dim in zip(data.dims, dims)
-                if dim != new_dim
-            }).loc[coords]
-
-        # The coordinates are expanded or transposed
-        return xr.DataArray(0, coords, dims) + data
-
-    elif data is not None:
-        return xr.DataArray(data, coords, dims)
-
-    return None
+    pass
 
 
 def load_model_data(root, model_name):
@@ -252,15 +179,7 @@ def load_model_data(root, model_name):
         corresponding variables as values.
 
     """
-    with open(root.joinpath("_subscripts_" + model_name + ".json")) as subs:
-        subscripts = json.load(subs)
-
-    # the _modules.json in the sketch_var folder shows to which module each
-    # variable belongs
-    with open(root.joinpath("modules_" + model_name, "_modules.json")) as mods:
-        modules = json.load(mods)
-
-    return subscripts, modules
+    pass
 
 
 def load_modules(module_name, module_content, work_dir, submodules):
@@ -295,18 +214,7 @@ def load_modules(module_name, module_content, work_dir, submodules):
         model file.
 
     """
-    if isinstance(module_content, list):
-        with open(work_dir.joinpath(module_name + ".py"), "r",
-                  encoding="UTF-8") as mod:
-            submodules.append(mod.read())
-    else:
-        for submod_name, submod_content in module_content.items():
-            load_modules(
-                submod_name, submod_content,
-                work_dir.joinpath(module_name),
-                submodules)
-
-    return "\n\n".join(submodules)
+    pass
 
 
 def load_outputs(file_name, transpose=False, columns=None, encoding=None):
@@ -339,36 +247,7 @@ def load_outputs(file_name, transpose=False, columns=None, encoding=None):
         A pandas.DataFrame with the outputs values.
 
     """
-    read_func = {'.csv': pd.read_csv, '.tab': pd.read_table}
-
-    file_name = Path(file_name)
-
-    if columns:
-        columns = set(columns)
-        if not transpose:
-            columns.add("Time")
-
-    for end, func in read_func.items():
-        if file_name.suffix.lower() == end:
-            if transpose:
-                out = func(file_name,
-                           encoding=encoding,
-                           index_col=0).T
-                if columns:
-                    out = out[list(columns)]
-            else:
-                out = func(file_name,
-                           encoding=encoding,
-                           usecols=columns,
-                           index_col="Time")
-
-            out.index = out.index.astype(float)
-            # return the dataframe removing nan index values
-            return out[~np.isnan(out.index)]
-
-    raise ValueError(
-        f"\nNot able to read '{file_name}'. "
-        + f"Only {', '.join(list(read_func))} files are accepted.")
+    pass
 
 
 def detect_encoding(filename):
@@ -386,12 +265,7 @@ def detect_encoding(filename):
         The encoding of the file.
 
     """
-    detector = UniversalDetector()
-    with open(filename, 'rb') as file:
-        for line in file.readlines():
-            detector.feed(line)
-    detector.close()
-    return detector.result['encoding']
+    pass
 
 
 def print_objects_format(object_set, text):
@@ -399,11 +273,7 @@ def print_objects_format(object_set, text):
     Return a printable version of the variables in object_sect with the
     header given with text.
     """
-    text += " (total %(n_obj)s):\n\t%(objs)s\n" % {
-        "n_obj": len(object_set),
-        "objs": ", ".join(object_set)
-    }
-    return text
+    pass
 
 
 @dataclass
@@ -476,20 +346,11 @@ class ProgressBar:
 
     def update(self):
         """Update progress bar"""
-        try:
-            self.counter += 1
-            self.bar.update(self.counter)
-        except AttributeError:
-            # Error if bar is not imported
-            pass
+        pass
 
     def finish(self):
         """Finish progress bar"""
-        try:
-            self.bar.finish()
-        except AttributeError:
-            # Error if bar is not imported
-            pass
+        pass
 
 
 class UniqueDims():
@@ -519,21 +380,7 @@ class UniqueDims():
         -------
         Updated name of the original dimension.
         """
-        if dim_name != self.dim_name:
-            raise ValueError(
-                "This object is configured to process dimension "
-                f"{self.dim_name} and it's being passed a dimension "
-                f"named {dim_name}"
-            )
-        if self.is_new(coords):
-            new_dim_name = self.dim_prefix + str(self.num)
-            self.unique_dims.append((new_dim_name, coords))
-            self.num += 1
-            return new_dim_name
-        else:
-            for y in self.unique_dims:
-                if np.array_equal(coords, y[1]):
-                    return y[0]
+        pass
 
     def is_new(self, coords):
         """
@@ -548,8 +395,4 @@ class UniqueDims():
         -------
         bool
         """
-        if not any(
-             map(lambda y: np.array_equal(y[1], coords),
-                 self.unique_dims)):
-            return True
-        return False
+        pass

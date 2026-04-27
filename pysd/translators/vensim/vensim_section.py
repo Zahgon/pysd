@@ -76,19 +76,12 @@ class Section():
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get section information."""
-        text = self.__str__()
-        if self.elements:
-            for element in self.elements:
-                text += element._verbose
-        else:
-            text += self.content
-
-        return text
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print section information to standard output."""
-        print(self._verbose)
+        pass
 
     def parse(self, parse_all: bool = True) -> None:
         """
@@ -108,39 +101,7 @@ class Section():
             added to self.elements but not parsed. Default is True.
 
         """
-        # parse the section to get the elements
-        tree = vu.Grammar.get("section_elements").parse(self.content)
-        self.elements = SectionElementsVisitor(tree).entries
-
-        if parse_all:
-            # parse all elements
-            self.elements = [element.parse() for element in self.elements]
-
-            # split subscripts and reality checks from other components
-            self.subscripts = [
-                element for element in self.elements
-                if isinstance(element, SubscriptRange)
-            ]
-            self.components = [
-                element for element in self.elements
-                if isinstance(element, Component)
-            ]
-            self.constraints = [
-                element for element in self.elements
-                if isinstance(element, Constraint)
-            ]
-            self.test_inputs = [
-                element for element in self.elements
-                if isinstance(element, TestInput)
-            ]
-
-            # reorder element list for better printing
-            self.elements = self.subscripts + self.components\
-                + self.constraints + self.test_inputs
-
-            [component.parse() for component in self.components]
-            [component.parse() for component in self.constraints]
-            [component.parse() for component in self.test_inputs]
+        pass
 
     def get_abstract_section(self) -> AbstractSection:
         """
@@ -158,59 +119,11 @@ class Section():
           in another programming language.
 
         """
-        return AbstractSection(
-            name=self.name,
-            path=self.path,
-            type=self.type,
-            params=self.params,
-            returns=self.returns,
-            subscripts=[
-                subs_range.get_abstract_subscript_range()
-                for subs_range in self.subscripts
-            ],
-            elements=self._merge_components(),
-            constraints=[
-                constraint.get_abstract_component()
-                for constraint in self.constraints],
-            test_inputs=[
-                test_input.get_abstract_component()
-                for test_input in self.test_inputs],
-            split=self.split,
-            views_dict=self.views_dict
-        )
+        pass
 
     def _merge_components(self) -> List[AbstractElement]:
         """Merge model components by their name."""
-        control_vars = ["initial_time", "final_time", "time_step", "saveper"]
-        merged = {}
-        for component in self.components:
-            # get a safe name to merge (case and white/underscore sensitivity)
-            name = component.name.lower().replace(" ", "_")
-            if name not in merged:
-                # create new element if it is the first component
-                if name in control_vars:
-                    merged[name] = AbstractControlElement(
-                        name=component.name,
-                        components=[])
-                else:
-                    merged[name] = AbstractElement(
-                        name=component.name,
-                        components=[])
-
-            if component.units:
-                # add units to element data
-                merged[name].units = component.units
-            if component.limits:
-                # add limits to element data
-                merged[name].limits = component.limits
-            if component.documentation:
-                # add documentation to element data
-                merged[name].documentation = component.documentation
-
-            # add AbstractComponent to the list of components
-            merged[name].components.append(component.get_abstract_component())
-
-        return list(merged.values())
+        pass
 
 
 class SectionElementsVisitor(parsimonious.NodeVisitor):
@@ -223,13 +136,7 @@ class SectionElementsVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_entry(self, n, vc):
-        self.entries.append(
-            Element(
-                equation=vc[0].strip(),
-                units=vc[2].strip(),
-                documentation=vc[4].strip(),
-            )
-        )
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text or ""
+        pass

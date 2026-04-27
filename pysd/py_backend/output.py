@@ -97,36 +97,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        self.__step = 0
-        self.ds = self.nc.Dataset(self.out_file, "w")
-
-        # defining global attributes
-        self.ds.description = "Results for simulation run on " \
-            f"{t.ctime(t.time())} using PySD version {__version__}"
-        self.ds.model_file = model.py_model_file or model.mdl_file
-        self.ds.timestep = f"{model.time.time_step()}" if model.cache_type[
-            "time_step"] == "run" else "Variable"
-        self.ds.initial_time = f"{model.time.initial_time()}"
-        self.ds.final_time = f"{model.time.final_time()}" if model.cache_type[
-            "final_time"] == "run" else "Variable"
-
-        # creating variables for all model dimensions
-        for dim_name, coords in model.subscripts.items():
-            coords = np.array(coords)
-            # create dimension
-            self.ds.createDimension(dim_name, len(coords))
-            # length of the longest string in the coords
-            max_str_len = len(max(coords, key=len))
-            # create variable for the dimension
-            var = self.ds.createVariable(
-                dim_name, f"S{max_str_len}", (dim_name,))
-            # assigning coords to dimension
-            var[:] = coords
-
-        # creating the time dimension as unlimited
-        self.ds.createDimension("time", None)
-        # creating variables
-        self.__create_ds_vars(model, self.capture_elements_step + ['time'])
+        pass
 
     def update(self, model):
         """
@@ -143,15 +114,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        self.ds['time'][self.__step] = model.time.round()
-        for key in self.capture_elements_step:
-            comp = model[key]
-            if isinstance(comp, xr.DataArray):
-                self.ds[key][self.__step, :] = comp.values
-            else:
-                self.ds[key][self.__step] = comp
-
-        self.__step += 1
+        pass
 
     def __update_run_elements(self, model):
         """
@@ -169,12 +132,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        for key in self.capture_elements_run:
-            comp = model[key]
-            if isinstance(comp, xr.DataArray):
-                self.ds[key][:] = comp.values
-            else:
-                self.ds[key][:] = comp
+        pass
 
     def postprocess(self, **kwargs):
         """
@@ -185,8 +143,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        self.ds.close()
-        print(f"Results stored in {self.out_file}")
+        pass
 
     def add_run_elements(self, model):
         """
@@ -202,9 +159,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        # creating variables in capture_elements
-        self.__create_ds_vars(model, self.capture_elements_run, time_dim=False)
-        self.__update_run_elements(model)
+        pass
 
     def __create_ds_vars(self, model, capture_elements, time_dim=True):
         """
@@ -226,31 +181,7 @@ class DatasetHandler(OutputHandlerInterface):
         None
 
         """
-        kwargs = dict()
-
-        if tuple(self.nc.__version__.split(".")) >= ('1', '6', '0'):
-            kwargs["compression"] = "zlib"
-
-        for key in capture_elements:
-            comp = model[key]
-
-            dims = tuple()
-            if isinstance(comp, xr.DataArray):
-                dims = tuple(comp.dims)
-            if time_dim:
-                dims = ("time",) + dims
-
-            var = self.ds.createVariable(key, "f8", dims, **kwargs)
-            # adding metadata for each var from the model.doc
-            for col in model.doc.columns:
-                if col in ["Subscripts", "Limits"]:
-                    # pass those that cannot be saved as attributes
-                    continue
-                var.setncattr(
-                    col,
-                    model.doc.loc[model.doc["Py Name"] == key, col].values[0]
-                    or "Missing"
-                    )
+        pass
 
 
 class DataFrameHandler(OutputHandlerInterface):
@@ -276,8 +207,7 @@ class DataFrameHandler(OutputHandlerInterface):
         None
 
         """
-        self.ds = defaultdict(list)
-        self.__step = 0
+        pass
 
     def update(self, model):
         """
@@ -293,11 +223,7 @@ class DataFrameHandler(OutputHandlerInterface):
         None
 
         """
-        self.ds['time'].append(model.time.round())
-        for key in self.capture_elements_step:
-            self.ds[key].append(getattr(model.components, key)())
-
-        self.__step += 1
+        pass
 
     def postprocess(self, **kwargs):
         """
@@ -310,20 +236,7 @@ class DataFrameHandler(OutputHandlerInterface):
             Simulation results stored as a pandas DataFrame.
 
         """
-        # create the dataframe
-        df = pd.DataFrame.from_dict(self.ds)
-        df.set_index('time', inplace=True)
-
-        # enforce flattening if df is to be saved to csv or tab file
-        flatten = True if self.out_file else kwargs.get("flatten", None)
-
-        df = DataFrameHandler.make_flat_df(
-            df, kwargs["return_addresses"], flatten
-            )
-        if self.out_file:
-            NCFile.df_to_text_file(df, self.out_file)
-
-        return df
+        pass
 
     def add_run_elements(self, model):
         """
@@ -339,8 +252,7 @@ class DataFrameHandler(OutputHandlerInterface):
         None
 
         """
-        for key in self.capture_elements_run:
-            self.ds[key] = [getattr(model.components, key)()] * self.__step
+        pass
 
     @staticmethod
     def make_flat_df(df, return_addresses, flatten=False):
@@ -371,30 +283,7 @@ class DataFrameHandler(OutputHandlerInterface):
             Formatted dataframe.
 
         """
-        new_df = {}
-        for real_name, (pyname, address) in return_addresses.items():
-            if address:
-                # subset the specific address
-                values = [x.loc[address] for x in df[pyname].values]
-            else:
-                # get the full column
-                values = df[pyname].to_list()
-
-            is_dataarray = len(values) != 0 and isinstance(
-                values[0], xr.DataArray)
-
-            if is_dataarray and values[0].size == 1:
-                # some elements are returned as 0-d arrays, convert
-                # them to float
-                values = [x.squeeze().values[()] for x in values]
-                is_dataarray = False
-
-            if flatten and is_dataarray:
-                DataFrameHandler.__add_flat(new_df, real_name, values)
-            else:
-                new_df[real_name] = values
-
-        return pd.DataFrame(index=df.index, data=new_df)
+        pass
 
     @staticmethod
     def __add_flat(savedict, name, values):
@@ -417,17 +306,7 @@ class DataFrameHandler(OutputHandlerInterface):
         None
 
         """
-        # remove subscripts from name if given
-        name = re.sub(r'\[.*\]', '', name)
-        dims = values[0].dims
-
-        # split values in xarray.DataArray
-        lval = [xrsplit(val) for val in values]
-        for i, ar in enumerate(lval[0]):
-            vals = [float(v[i]) for v in lval]
-            subs = '[' + ','.join([str(ar.coords[dim].values)
-                                   for dim in dims]) + ']'
-            savedict[name+subs] = vals
+        pass
 
 
 class ModelOutput():
@@ -453,48 +332,38 @@ class ModelOutput():
 
     @staticmethod
     def get_handler(out_file):
-        if out_file is None:
-            return ModelOutput.out_handlers["__default__"](None)
-
-        out_file = Path(out_file)
-
-        try:
-            return ModelOutput.out_handlers[out_file.suffix](out_file)
-        except KeyError:
-            raise ValueError(
-                f"Unsupported output file format {out_file.suffix}")
+        pass
 
     def set_capture_elements(self, capture_elements):
-        self.handler.capture_elements_step = capture_elements["step"]
-        self.handler.capture_elements_run = capture_elements["run"]
+        pass
 
     def initialize(self, model):
         """
         Delegating the creation of the results object and its elements
         to the appropriate handler.
         """
-        self.handler.initialize(model)
+        pass
 
     def update(self, model):
         """
         Delegating the update of the results object and its elements
         to the appropriate handler.
         """
-        self.handler.update(model)
+        pass
 
     def postprocess(self, **kwargs):
         """
         Delegating the postprocessing of the results object
         to the appropriate handler.
         """
-        return self.handler.postprocess(**kwargs)
+        pass
 
     def add_run_elements(self, model):
         """
         Delegating the addition of results with run cache in the
         output object to the appropriate handler.
         """
-        self.handler.add_run_elements(model)
+        pass
 
     @staticmethod
     def collect(model, flatten_output=True):
@@ -515,11 +384,4 @@ class ModelOutput():
             path in the output_file argument.
 
         """
-        del model._dependencies["OUTPUTS"]
-
-        model.output.add_run_elements(model)
-
-        model._remove_constant_cache()
-
-        return model.output.postprocess(
-            return_addresses=model.return_addresses, flatten=flatten_output)
+        pass

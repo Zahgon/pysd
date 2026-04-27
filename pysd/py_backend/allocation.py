@@ -62,72 +62,7 @@ class Priorities:
             the limits and starting point of the optimization problem.
 
         """
-        if np.any(pp[:, 2] <= 0):
-            # pwidth values smaller than 0
-            raise ValueError("pwidth values must be positive.")
-
-        if kind == "demand":
-            # Get the list of priority functions and the intervals where
-            # they are strictly monotonous (injective function)
-            func_int = [
-                cls.get_function_demand(q0[i], pp[i])
-                for i in range(pp.shape[0])
-            ]
-            # In order to get the range of the full_allocation function,
-            # we need to flip the lower and the upper value, as it is a
-            # decreasing function for demand
-            int_attr = {"lower": "upper", "upper": "lower"}
-        elif kind == "supply":  # pragma: no cover
-            # Get the list of priority functions and the intervals where
-            # they are strictly monotonous (injective function)
-            func_int = [
-                cls.get_function_supply(q0[i], pp[i])
-                for i in range(pp.shape[0])
-            ]
-            # In order to get the range of the full_allocation function,
-            # we need to keep the lower and the upper value, as it is a
-            # increasing function for supply
-            int_attr = {"lower": "lower", "upper": "upper"}
-        else:
-            raise ValueError(
-                f"kind='{kind}' is not allowed. kind should be "
-                "'demand' or 'supply'.")
-
-        functions = [fi[0] for fi in func_int]
-        intervals = [fi[1] for fi in func_int]
-
-        # Join the intervals of all functions to get the intervals where
-        # the sum of the functions is strictly monotonous (injective
-        # function), therefore we can solve the minimization problem in
-        # strictly monotonous areas of the function, avoiding the crash
-        # of the algorithm
-        interval = intervals[0]
-        for i in intervals[1:]:
-            interval = interval.union(i)
-
-        # Full allocation function -> function to solve
-        def full_allocation(x):
-            if isinstance(x, np.ndarray):
-                # Fix to solve issues in the newest numpy versions
-                x = x.squeeze()[()]
-            return np.sum([func(x) for func in functions])
-
-        def_intervals = []
-        for subinterval in interval:
-            # Iterate over disjoint interval sections
-            # Each interval section will be converted in supply interval
-            # and compute the starting point for the supply interval
-            # as the midpoint in the priority interval
-            def_intervals.append((
-                p.closed(
-                    full_allocation(getattr(subinterval, int_attr["lower"])),
-                    full_allocation(getattr(subinterval, int_attr["upper"]))
-                ),
-                subinterval,
-                .5*(subinterval.upper+subinterval.lower)
-            ))
-
-        return functions, full_allocation, def_intervals
+        pass
 
     @classmethod
     def get_function_demand(cls, q0, pp):
@@ -149,30 +84,7 @@ class Priorities:
             The interval where the priority function is strictly monotonous.
 
         """
-        if q0 == 0:
-            # No demand is requested return a 0 function with an empty interval
-            return lambda x: 0, p.empty()
-        if pp[0] == 0:
-            # Fixed quantity demand
-            return cls.fixed_quantity(q0, *pp[1:])
-        elif pp[0] == 1:
-            # Rectangular demand
-            return cls.rectangular(q0, *pp[1:])
-        elif pp[0] == 2:
-            # Triangular demand
-            return cls.triangular(q0, *pp[1:])
-        elif pp[0] == 3:
-            # Normal distribution demand
-            return cls.normal(q0, *pp[1:])
-        elif pp[0] == 4:
-            # Exponential distribution demand
-            return cls.exponential(q0, *pp[1:])
-        elif pp[0] == 5:
-            # Constant elasticity demand
-            return cls.constant_elasticity_demand(q0, *pp[1:])
-        else:
-            raise ValueError(
-                f"The priority function for pprofile={pp[0]} is not valid.")
+        pass
 
     @classmethod
     def get_function_supply(cls, q0, pp):
@@ -228,18 +140,7 @@ class Priorities:
             The priority function.
 
         """
-        def priority_func(x):
-            if x <= ppriority - pwidth*.5:
-                return q0
-            elif x < ppriority + pwidth*.5:
-                return q0*(1-(x-ppriority+pwidth*.5)/pwidth)
-            else:
-                return 0
-
-        return (
-            priority_func,
-            p.open(ppriority - pwidth*.5, ppriority + pwidth*.5)
-        )
+        pass
 
     @staticmethod
     def triangular(q0, ppriority, pwidth, pextra):
@@ -265,20 +166,7 @@ class Priorities:
             The priority function.
 
         """
-        def priority_func(x):
-            if x <= ppriority - pwidth*.5:
-                return q0
-            elif x < ppriority:
-                return q0*(1-2*(x-ppriority+pwidth*.5)**2/pwidth**2)
-            elif x < ppriority + pwidth*.5:
-                return 2*q0*(ppriority+pwidth*.5-x)**2/pwidth**2
-            else:
-                return 0
-
-        return (
-            priority_func,
-            p.open(ppriority - pwidth*.5, ppriority + pwidth*.5)
-        )
+        pass
 
     @staticmethod
     def normal(q0, ppriority, pwidth, pextra):
@@ -305,18 +193,7 @@ class Priorities:
             The priority function.
 
         """
-        def priority_func(x):
-            return q0*.5*(2-erfc((ppriority-x)/(np.sqrt(2)*pwidth)))
-
-        # Normal distribution CDF is stricty monotonous in (-inf, inf).
-        # However, numerically it is only in a the range ~ (-8.29*sd, 8.29*sd)
-        return (
-            priority_func,
-            p.open(
-                ppriority-8.2923611*pwidth,
-                ppriority+8.2923611*pwidth
-            )
-        )
+        pass
 
     @staticmethod
     def exponential(q0, ppriority, pwidth, pextra):
@@ -324,7 +201,7 @@ class Priorities:
         Demand curve for exponential shape
         The supply curve will be shaped as the integral of an
         exponential distribution that is symmetric around its mean
-        (0.5*exp(-ABS(x-ppriority)/pwidth) on -∞ to ∞).
+        (0.5*exp(-ABS(x-ppriority)/pwidth) on -âˆž to âˆž).
 
         Parameters
         ----------
@@ -344,21 +221,7 @@ class Priorities:
             The priority function.
 
         """
-        def priority_func(x):
-            if x < ppriority:
-                return q0*(1-.5*np.exp((x-ppriority)/pwidth))
-            else:
-                return q0*.5*np.exp((ppriority-x)/pwidth)
-
-        # Exponential distribution CDF is stricty monotonous in (-inf, inf).
-        # However, numerically it is only in a the range ~ (-36.7*sd, 36.7*sd)
-        return (
-            priority_func,
-            p.open(
-                ppriority-36.7368005696*pwidth,
-                ppriority+36.7368005696*pwidth
-            )
-        )
+        pass
 
     @staticmethod
     def constant_elasticity_demand(q0, ppriority, pwidth, pextra):
@@ -456,26 +319,7 @@ def _allocate_available_1d(request, pp, avail):
         The distribution of the supply.
 
     """
-    if avail >= np.sum(request):
-        return request
-    if avail == 0:
-        return np.zeros_like(request)
-
-    priorities, full_allocation, intervals =\
-        Priorities.get_functions(request, pp, "demand")
-
-    for interval, x_interval, x0 in intervals:
-        if avail in interval:
-            break
-    priority = least_squares(
-        lambda x: full_allocation(x) - avail,
-        x0,
-        bounds=(x_interval.lower, x_interval.upper),
-        method='dogbox',
-        tr_solver='exact',
-        ).x[0]
-
-    return [allocate(priority) for allocate in priorities]
+    pass
 
 
 def allocate_available(request, pp, avail):
@@ -513,33 +357,7 @@ def allocate_available(request, pp, avail):
     when close to the boundaries of the defined priority profiles.
 
     """
-    if np.any(request < 0):
-        raise ValueError(
-            "There are some negative request values. Ensure that "
-            "your request is always non-negative. Allocation requires "
-            f"all quantities to be positive or 0.\n{request}")
-
-    if np.any(avail < 0):
-        raise ValueError(
-            f"avail={avail} is not allowed. avail should be non-negative."
-        )
-
-    if len(request.shape) == 1:
-        # NUMPY: avoid '.values' and return directly the result of the
-        # function call
-        return xr.DataArray(
-            _allocate_available_1d(
-                request.values, pp.values, avail),
-            request.coords
-        )
-
-    # NUMPY: use np.empty_like and remove '.values'
-    out = xr.zeros_like(request, dtype=float)
-    for comb in itertools.product(*[range(i) for i in avail.shape]):
-        out.values[comb] = _allocate_available_1d(
-            request.values[comb], pp.values[comb], avail.values[comb])
-
-    return out
+    pass
 
 
 def _allocate_by_priority_1d(request, priority, width, supply):
@@ -588,59 +406,7 @@ def _allocate_by_priority_1d(request, priority, width, supply):
         The distribution of the supply.
 
     """
-    if supply >= np.sum(request):
-        # All targets receive their request
-        return request
-    elif supply == 0:
-        # No supply, all targets receive 0
-        return np.zeros_like(request)
-
-    # Remove request 0 targets and order by priority
-    is_0 = request == 0
-    sort = (-priority[~is_0]).argsort()
-    request = request[~is_0].astype(float)[sort]
-    priority = priority[~is_0][sort]
-    # Create the outputs array
-    out_return = np.zeros_like(is_0, dtype=float)
-    out = np.zeros_like(request, dtype=float)
-    # Compute the distances between target supply and next target start
-    distances = np.full_like(request, np.nan, dtype=float)
-    # last target will have an numpy.nan as distances as there are no
-    # more targets after
-    distances[:-1] = np.minimum(-np.diff(priority)/width, 1)*request[:-1]
-    # Create a vector of the current active targets
-    active = np.zeros_like(request, dtype=bool)
-    active[0] = True
-    # Create a vector of the last activated target
-    c_i = 0
-    while supply > 0:
-        # Compute the slopes of the active targets of supply
-        slopes = request*active
-        slopes /= np.sum(slopes)
-        # Compute how much supply much be given to any target reach its request
-        dx_next_top = np.nanmin((request-out)[active]/slopes[active])
-        # Compute how much supply is needed to start next target
-        # (last target will return a numpy.nan)
-        dx_next_start = (distances[c_i]-out[c_i])/slopes[c_i]
-        # Compute where the next change in allocation function will change
-        # this will happen when a target reaches is request, or when
-        # the next target starts or when the supply is totally distributed
-        dx = np.nanmin((dx_next_top, dx_next_start, supply))
-        # Assing the supply to the targets
-        out += slopes*dx
-        if np.isclose(dx, dx_next_start, rtol=1e-10, atol=1e-16):
-            # A new target will start in the next loop
-            c_i += 1
-            # Active the next targetif its request is different than 0
-            active[c_i] = True
-        if dx == dx_next_top:
-            # One or more target have reached their request
-            active[out == request] = False
-        supply -= dx
-    # Return the distributed supply in the original order
-    # adding to it again the request 0 if the where removed
-    out_return[~is_0] = out[sort.argsort()]
-    return out_return
+    pass
 
 
 def allocate_by_priority(request, priority, width, supply):
@@ -678,34 +444,4 @@ def allocate_by_priority(request, priority, width, supply):
         The distribution of the supply.
 
     """
-    if np.any(request < 0):
-        raise ValueError(
-            "There are some negative request values. Ensure that "
-            "your request is always non-negative. Allocation requires "
-            f"all quantities to be positive or 0.\n{request}")
-
-    if np.any(width <= 0):
-        raise ValueError(
-            f"width={width} \n is not allowed. width must be greater than 0.")
-
-    if np.any(supply < 0):
-        raise ValueError(
-            f"supply={supply} \n is not allowed. supply must not be negative.")
-
-    if len(request.shape) == 1:
-        # NUMPY: avoid '.values' and return directly the result of the
-        # function call
-        return xr.DataArray(
-            _allocate_by_priority_1d(
-                request.values, priority.values, width, supply),
-            request.coords
-        )
-
-    # NUMPY: use np.empty_like and remove '.values'
-    out = xr.zeros_like(request, dtype=float)
-    for comb in itertools.product(*[range(i) for i in supply.shape]):
-        out.values[comb] = _allocate_by_priority_1d(
-            request.values[comb], priority.values[comb],
-            width.values[comb], supply.values[comb])
-
-    return out
+    pass

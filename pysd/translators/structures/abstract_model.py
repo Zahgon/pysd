@@ -52,13 +52,10 @@ class AbstractComponent:
             The indent to use for a lower level object. Default is ''.
 
         """
-        if depth == 0:
-            return self.__str__()
-
-        return self.__str__() + "\n" + self._str_child(depth, indent)
+        pass
 
     def _str_child(self, depth, indent) -> str:  # pragma: no cover
-        return str(self.ast).replace("\t", indent).replace("\n", "\n" + indent)
+        pass
 
 
 @dataclass
@@ -172,13 +169,10 @@ class AbstractData(AbstractComponent):
             The indent to use for a lower level object. Default is ''.
 
         """
-        if depth == 0:
-            return self.__str__()
-
-        return self.__str__() + "\n" + self._str_child(depth, indent)
+        pass
 
     def _str_child(self, depth, indent) -> str:  # pragma: no cover
-        return str(self.ast).replace("\n", "\n" + indent)
+        pass
 
 
 @dataclass
@@ -224,17 +218,10 @@ class AbstractElement:
             The indent to use for a lower level object. Default is ''.
 
         """
-        if depth == 0:
-            return self.__str__()
-        elif depth is not None:
-            depth -= 1
-
-        return self.__str__() + "\n" + self._str_child(depth, indent)
+        pass
 
     def _str_child(self, depth, indent) -> str:  # pragma: no cover
-        return "\n".join([
-            component.dump(depth, indent) for component in self.components
-            ]).replace("\n", "\n" + indent)
+        pass
 
 
 @dataclass
@@ -309,7 +296,7 @@ class AbstractSubscriptRange:
             The indent to use for a lower level object. Default is ''.
 
         """
-        return self.__str__()
+        pass
 
 
 @dataclass
@@ -427,19 +414,10 @@ class AbstractSection:
             The indent to use for a lower level object. Default is ''.
 
         """
-        if depth == 0:
-            return self.__str__()
-        elif depth is not None:
-            depth -= 1
-
-        return self.__str__() + "\n" + self._str_child(depth, indent)
+        pass
 
     def _str_child(self, depth, indent) -> str:  # pragma: no cover
-        return "\n".join([
-            element.dump(depth, indent) for element in self.subscripts
-            ] + [
-            element.dump(depth, indent) for element in self.elements
-            ]).replace("\n", "\n" + indent)
+        pass
 
 
 @dataclass
@@ -475,14 +453,7 @@ class AbstractModel:
             The indent to use for a lower level object. Default is ''.
 
         """
-        if depth == 0:
-            return self.__str__()
-        elif depth is not None:
-            depth -= 1
-
-        return self.__str__() + "\n" + self._str_child(depth, indent)
+        pass
 
     def _str_child(self, depth, indent) -> str:  # pragma: no cover
-        return "\n".join([
-            section.dump(depth, indent) for section in self.sections
-            ]).replace("\n", "\n" + indent)
+        pass

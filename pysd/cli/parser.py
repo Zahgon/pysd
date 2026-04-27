@@ -30,12 +30,7 @@ def check_output(string):
     Checks that out put file ends with .tab or .csv
 
     """
-    if not string.endswith(('.tab', '.csv', '.nc')):
-        parser.error(
-            f'when parsing {string}'
-            '\nThe output file name must be .tab, .csv or .nc...')
-
-    return string
+    pass
 
 
 def check_model(string):
@@ -43,35 +38,14 @@ def check_model(string):
     Checks that model file ends with .py .mdl or .xmile and that exists.
 
     """
-    suffixes = [".py"] + vensim_extensions + xmile_extensions
-    if not any(string.lower().endswith(suffix) for suffix in suffixes):
-        parser.error(
-            f"when parsing {string} \nThe model file name must be a Vensim"
-            f" ({', '.join(vensim_extensions)}), a Xmile "
-            f"({', '.join(xmile_extensions)}) or a PySD (.py) model file...")
-
-    if not os.path.isfile(string):
-        parser.error(
-            f"when parsing {string}"
-            "\nThe model file does not exist...")
-
-    return string
+    pass
 
 
 def check_data_file(string):
     """
     Check that data file is a tab or csv file and that exists.
     """
-    if not string.endswith(('.tab', '.csv', '.nc')):
-        parser.error(
-            f'when parsing {string}'
-            '\nThe data file name must be .tab, .csv or .nc...')
-    elif not os.path.isfile(string):
-        parser.error(
-            f'when parsing {string}'
-            '\nThe data file does not exist...')
-    else:
-        return string
+    pass
 
 
 def split_files(string):
@@ -81,7 +55,7 @@ def split_files(string):
     --data file1.tab -> ['file1.tab']
 
     """
-    return [check_data_file(s.strip()) for s in string.split(',')]
+    pass
 
 
 def split_columns(string):
@@ -91,11 +65,7 @@ def split_columns(string):
     --return-columns my_vars.txt -> ['temperature c', '"heat$"']
 
     """
-    if string.endswith('.txt'):
-        with open(string, 'r') as file:
-            return [col.rstrip('\n').strip() for col in file]
-
-    return [s.strip() for s in string.split(',')]
+    pass
 
 
 def split_timestamps(string):
@@ -104,14 +74,7 @@ def split_timestamps(string):
     --return-timestamps '1, 5, 15' -> array([1., 5., 15.])
 
     """
-    try:
-        return np.array([s.strip() for s in string.split(',')], dtype=float)
-    except Exception:
-        # error
-        raise parser.error(
-            f'when parsing {string}'
-            '\nThe return time stamps must be separated by commas...\n'
-            f'See {docs} for examples.')
+    pass
 
 
 def split_vars(string):
@@ -122,39 +85,7 @@ def split_vars(string):
     'a:5' -> {'a': ('initial', 5.)}
 
     """
-    try:
-        if '=' in string:
-            # new variable value
-            var, value = string.split('=')
-            type = 'param'
-
-        if ':' in string:
-            # initial time value
-            var, value = string.split(':')
-            type = 'initial'
-
-        if re.match(r"^[+-]?(\d*\.)?\d+$", value.strip()):
-            # value is a number
-            return {var.strip(): (type, float(value))}
-
-        # value is series
-        assert type == 'param'
-        value = literal_eval(value)
-        assert len(value) == 2
-        assert len(value[0]) == len(value[1])
-        return {var.strip(): (type,
-                              pd.Series(index=value[0], data=value[1]))}
-
-    except Exception:
-        # error
-        raise parser.error(
-            f'when parsing {string}'
-            '\nYou must use variable=new_value to redefine values or '
-            'variable:initial_value to define initial value.'
-            'variable must be a model component, new_value can be a '
-            'float or a list of two list, initial_value must be a float'
-            '...\n'
-            f'See {docs} for examples.')
+    pass
 
 
 class SplitVarsAction(Action):

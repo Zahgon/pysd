@@ -72,29 +72,7 @@ def read_xmile(xmile_file, data_files=None, data_files_encoding=None,
     >>> model = read_xmile('../tests/test-models/samples/teacup/teacup.xmile')
 
     """
-    from pysd.translators.xmile.xmile_file import XmileFile
-    from pysd.builders.python.python_model_builder import ModelBuilder
-
-    # Read and parse Xmile file
-    xmile_file_obj = XmileFile(xmile_file)
-    xmile_file_obj.parse()
-
-    # get AbstractModel
-    abs_model = xmile_file_obj.get_abstract_model()
-
-    # build Python file
-    py_model_file = ModelBuilder(abs_model).build_model()
-
-    # load Python file
-    model = load(
-        py_model_file,
-        data_files, data_files_encoding,
-        initialize,
-        missing_values
-    )
-    model.xmile_file = str(xmile_file)
-
-    return model
+    pass
 
 
 def read_vensim(mdl_file, data_files=None, data_files_encoding=None,
@@ -174,32 +152,7 @@ def read_vensim(mdl_file, data_files=None, data_files_encoding=None,
     >>> model = read_vensim('../tests/test-models/samples/teacup/teacup.mdl')
 
     """
-    from pysd.translators.vensim.vensim_file import VensimFile
-    from pysd.builders.python.python_model_builder import ModelBuilder
-    # Read and parse Vensim file
-    ven_file = VensimFile(mdl_file, encoding=encoding)
-    ven_file.parse()
-    if split_views:
-        # split variables per views
-        subview_sep = kwargs.get("subview_sep", "")
-        ven_file.parse_sketch(subview_sep)
-
-    # get AbstractModel
-    abs_model = ven_file.get_abstract_model()
-
-    # build Python file
-    py_model_file = ModelBuilder(abs_model).build_model()
-
-    # load Python file
-    model = load(
-        py_model_file,
-        data_files, data_files_encoding,
-        initialize,
-        missing_values
-    )
-    model.mdl_file = str(mdl_file)
-
-    return model
+    pass
 
 
 def load(py_model_file, data_files=None, data_files_encoding=None,
@@ -245,9 +198,4 @@ def load(py_model_file, data_files=None, data_files_encoding=None,
     >>> model = load('../tests/test-models/samples/teacup/teacup.py')
 
     """
-    return Model(
-        py_model_file,
-        data_files, data_files_encoding,
-        initialize,
-        missing_values
-    )
+    pass

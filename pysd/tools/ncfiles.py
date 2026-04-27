@@ -66,11 +66,7 @@ class NCFile():
             Dataframe with all colums specified in subset.
 
         """
-        df = self.to_df(subset=subset)
-
-        NCFile.df_to_text_file(df, outfile, time_in_row)
-
-        return df
+        pass
 
     def to_df(self,
               subset: Optional[list] = None,
@@ -90,7 +86,7 @@ class NCFile():
             Dataframe with all colums specified in subset.
 
         """
-        return NCFile.ds_to_df(self.ds, subset, self.parallel)
+        pass
 
     def open_nc(self) -> xr.Dataset:
         """
@@ -103,10 +99,7 @@ class NCFile():
         xarray.Dataset
 
         """
-        if self.parallel:
-            return xr.open_dataset(self.ncfile, engine="netcdf4", chunks=-1)
-
-        return xr.open_dataset(self.ncfile, engine="netcdf4")
+        pass
 
     @staticmethod
     def ds_to_df(ds: xr.Dataset,
@@ -137,26 +130,7 @@ class NCFile():
             Dataframe with all colums specified in subset.
 
         """
-        subset = NCFile._validate_ds_subset(ds, subset)
-
-        if parallel:
-            processing_func = NCFile.da_to_dict_delayed
-        else:
-            processing_func = NCFile.da_to_dict
-
-        savedict = {}
-
-        for name in subset:
-            print(f"\nProcessing variable {name}.")
-            da = ds[name]
-            dims = da.dims
-
-            if not dims or dims == (index_dim,):
-                savedict.update({name: da.values.tolist()})
-            else:
-                savedict.update(processing_func(da, index_dim))
-
-        return NCFile.dict_to_df(savedict)
+        pass
 
     @staticmethod
     def df_to_text_file(df: pd.DataFrame, outfile: Path,
@@ -178,34 +152,7 @@ class NCFile():
         -------
         None
         """
-        outfile = Path(outfile)
-
-        out_fmt = outfile.suffix
-
-        if out_fmt not in NCFile.valid_export_file_types:
-            raise TypeError("Invalid output file format {out_fmt}\n"
-                            "Supported formats are csv and tab.")
-
-        outfile.parent. mkdir(parents=True, exist_ok=True)
-
-        if not isinstance(time_in_row, bool):
-            raise ValueError("time_in_row argument takes boolen values.")
-
-        # process output file path
-        if outfile.suffix == ".csv":
-            sep = ","
-            df.columns = [col.replace(",", ";") for col in df.columns]
-        else:
-            sep = "\t"
-
-        if time_in_row:
-            df = df.transpose()
-
-        # QUOTE_NONE used to print the csv/tab files as vensim does with
-        # special characterse, e.g.: "my-var"[Dimension]
-        df.to_csv(outfile, sep=sep, index_label="Time", quoting=QUOTE_NONE)
-
-        print(f"Data saved in '{outfile}'")
+        pass
 
     @staticmethod
     def da_to_dict(da: xr.DataArray, index_dim: str) -> dict:
@@ -223,17 +170,7 @@ class NCFile():
             scalar or an array along this dimension).
 
         """
-        dims, coords = NCFile._get_da_dims_coords(da, index_dim)
-
-        indexes = []
-        # TODO: try to achieve the same as itertools.product with
-        # xr.DataArray.stack
-        for coords_prod in itertools.product(*coords):
-            indexes.append(
-                NCFile._index_da_by_coord_labels(da, dims, coords_prod)
-            )
-
-        return dict(indexes)
+        pass
 
     @staticmethod
     def da_to_dict_delayed(da: xr.DataArray, index_dim: str) -> dict:
@@ -253,32 +190,7 @@ class NCFile():
             indexing (the indexed data will be an array along this dimension).
 
         """
-        namespace = dir()
-        if not all(
-             map(lambda x: x in namespace, [
-                "delayed", "compute", "ProgressBar"]
-                )):
-            from dask import delayed, compute
-            from dask.diagnostics import ProgressBar
-
-        dims, coords = NCFile._get_da_dims_coords(da, index_dim)
-
-        # loading data into memory for faster indexing
-        da.load()
-
-        indexes = []
-        # TODO: try to achieve the same as itertools.product with
-        # xr.DataArray.stack
-        for coords_prod in itertools.product(*coords):
-            x = delayed(
-                NCFile._index_da_by_coord_labels
-            )(da, dims, coords_prod)
-            indexes.append(x)
-
-        with ProgressBar():
-            res = compute(*indexes)
-
-        return dict(res)
+        pass
 
     @staticmethod
     def dict_to_df(d: dict) -> pd.DataFrame:
@@ -291,10 +203,7 @@ class NCFile():
             Dictionary to convert to pandas DataFrame.
 
         """
-        if "time" not in d:
-            raise KeyError("Missing time key.")
-
-        return pd.DataFrame(d).set_index('time')
+        pass
 
     @staticmethod
     def _validate_nc_path(nc_path: Union[str, Path]) -> Path:
@@ -302,20 +211,7 @@ class NCFile():
         Checks validity of the nc_path passed by the user. We run these
         checks because xarray Exceptions are not very explicit.
         """
-
-        if not isinstance(nc_path, (str, Path)):
-            raise TypeError(f"Invalid file path type: {type(nc_path)}.\n"
-                            "Please provide string or pathlib Path")
-
-        nc_path = Path(nc_path)
-
-        if not nc_path.is_file():
-            raise FileNotFoundError(f"{nc_path} could not be found.")
-
-        if not nc_path.suffix == ".nc":
-            raise ValueError("Input file must have nc extension.")
-
-        return nc_path
+        pass
 
     @staticmethod
     def _validate_ds_subset(ds: xr.Dataset, subset: list) -> list:
@@ -330,30 +226,7 @@ class NCFile():
             Subset of variable names in the xarray Dataset.
 
         """
-        # use all variable names
-        if not subset:
-            new_subset = [name for name in ds.data_vars.keys()]
-        else:
-            if not isinstance(subset, list) or \
-                 not all(map(lambda x: isinstance(x, str), subset)):
-                raise TypeError("Subset argument must be a list of strings.")
-
-            new_subset = []
-            for name in subset:
-                if name in ds.data_vars.keys():
-                    new_subset.append(name)
-                else:
-                    warnings.warn(f"{name} not in Dataset.")
-
-            if not new_subset:
-                raise ValueError("None of the elements of the subset are "
-                                 "present in the Dataset.")
-
-        # adding time in the final subset
-        if "time" not in new_subset:
-            new_subset.append("time")
-
-        return new_subset
+        pass
 
     @staticmethod
     def _index_da_by_coord_labels(da: xr.DataArray, dims: list,
@@ -380,11 +253,7 @@ class NCFile():
         indexed data as the second index.
 
         """
-        name = da.name
-        idx = dict(zip(dims, coords))
-        subs = "[" + ",".join(map(lambda x: str(x), coords)) + "]"
-
-        return name + subs, da.loc[idx].values
+        pass
 
     @staticmethod
     def _get_da_dims_coords(da: xr.DataArray, exclude_dim: str) -> tuple:
@@ -406,11 +275,4 @@ class NCFile():
             List of lists of coordinates for each dimension.
 
         """
-        dims, coords = [], []
-
-        for dim in da.dims:
-            if dim != exclude_dim:
-                dims.append(dim)
-                coords.append(da.coords[dim].values)
-
-        return dims, coords
+        pass

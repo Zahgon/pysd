@@ -28,31 +28,7 @@ def main(args):
     None
 
     """
-    options = parser.parse_args(args)
-
-    model = load(options.model_file, options.data_files,
-                 options.missing_values, options.split_views,
-                 subview_sep=options.subview_sep)
-
-    if not options.run:
-        print("\nFinished!")
-        sys.exit()
-
-    model.initialize()
-
-    if not options.output_file:
-        options.output_file = os.path.splitext(os.path.basename(
-            options.model_file
-            ))[0]\
-                + datetime.now().strftime("_output_%Y_%m_%d-%H_%M_%S_%f.tab")
-
-    model.run(**create_configuration(model, options))
-
-    if options.export_file:
-        model.export(options.export_file)
-
-    print("\nFinished!")
-    sys.exit()
+    pass
 
 
 def load(model_file, data_files, missing_values, split_views, **kwargs):
@@ -94,22 +70,7 @@ def load(model_file, data_files, missing_values, split_views, **kwargs):
     pysd.model
 
     """
-    model_file_suffix = Path(model_file).suffix.lower()
-    if model_file_suffix in vensim_extensions:
-        print("\nTranslating model file...\n")
-        return pysd.read_vensim(model_file, initialize=False,
-                                data_files=data_files,
-                                missing_values=missing_values,
-                                split_views=split_views, **kwargs)
-    elif model_file_suffix in xmile_extensions:
-        print("\nTranslating model file...\n")
-        return pysd.read_xmile(model_file, initialize=False,
-                               data_files=data_files,
-                               missing_values=missing_values)
-    else:
-        return pysd.load(model_file, initialize=False,
-                         data_files=data_files,
-                         missing_values=missing_values)
+    pass
 
 
 def create_configuration(model, options):
@@ -127,21 +88,4 @@ def create_configuration(model, options):
     conf_dict: dict
 
     """
-    conf_dict = {
-        "progress": options.progress,
-        "params": options.new_values["param"],
-        "initial_condition": (options.initial_time or model.time(),
-                              options.new_values["initial"]),
-        "return_columns": options.return_columns,
-        "final_time": options.final_time,
-        "time_step": options.time_step,
-        "saveper": options.saveper,
-        "flatten_output": True,  # need to return totally flat DF
-        "return_timestamps": options.return_timestamps,  # given or None,
-        "output_file": options.output_file
-    }
-
-    if options.import_file:
-        conf_dict["initial_condition"] = options.import_file
-
-    return conf_dict
+    pass

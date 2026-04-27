@@ -43,40 +43,7 @@ def runner(model_file, canonical_file=None, transpose=False, data_files=None):
         pandas.DataFrame of the model output and the canonical output.
 
     """
-    if isinstance(model_file, str):
-        model_file = Path(model_file)
-
-    directory = model_file.parent
-
-    # load canonical output
-    if not canonical_file:
-        if directory.joinpath('output.csv').is_file():
-            canonical_file = directory.joinpath('output.csv')
-        elif directory.joinpath('output.tab').is_file():
-            canonical_file = directory.joinpath('output.tab')
-        else:
-            raise FileNotFoundError("\nCanonical output file not found.")
-
-    canon = load_outputs(canonical_file,
-                         transpose=transpose,
-                         encoding=detect_encoding(canonical_file))
-
-    # load model
-    if model_file.suffix.lower() in vensim_extensions:
-        model = read_vensim(model_file, data_files)
-    elif model_file.suffix.lower() in xmile_extensions:
-        model = read_xmile(model_file, data_files)
-    elif model_file.suffix.lower() == ".py":
-        model = load(model_file, data_files)
-    else:
-        raise ValueError(
-            "\nThe model file name must be a Vensim"
-            f" ({', '.join(vensim_extensions)}), a Xmile "
-            f"({', '.join(xmile_extensions)}) or a PySD (.py) model file...")
-
-    # run model and return the result
-
-    return model.run(return_columns=canon.columns), canon
+    pass
 
 
 def assert_frames_close(actual, expected, assertion="raise",
@@ -174,96 +141,7 @@ def assert_frames_close(actual, expected, assertion="raise",
         http://nbviewer.jupyter.org/gist/jiffyclub/ac2e7506428d5e1d587b
 
     """
-    if not isinstance(actual, pd.DataFrame)\
-       or not isinstance(expected, pd.DataFrame):
-        raise TypeError('\nInputs must both be pandas DataFrames.')
-
-    expected_cols, actual_cols = set(expected.columns), set(actual.columns)
-
-    if expected_cols != actual_cols:
-        # columns are not equal
-        message = ""
-
-        if actual_cols.difference(expected_cols):
-            columns = sorted([
-                "'" + col + "'" for col
-                in actual_cols.difference(expected_cols)])
-            columns = ", ".join(columns)
-            message += '\nColumns ' + columns\
-                       + ' from actual values not found in expected values.'
-
-        if expected_cols.difference(actual_cols):
-            columns = sorted([
-                "'" + col + "'" for col
-                in expected_cols.difference(actual_cols)])
-            columns = ", ".join(columns)
-            message += '\nColumns ' + columns\
-                       + ' from expected values not found in actual values.'
-
-        if assertion == "raise":
-            raise ValueError(
-                '\nColumns from actual and expected values must be equal.'
-                + message)
-        else:
-            warnings.warn(message)
-
-    columns = list(actual_cols.intersection(expected_cols))
-
-    # TODO let compare dataframes with different timestamps if "warn"
-    assert np.all(np.equal(expected.index.values, actual.index.values)), \
-        "test set and actual set must share a common index, "\
-        "instead found %s vs %s" % (expected.index.values, actual.index.values)
-
-    # if for Vensim outputs where constant values are only in the first row
-    _remove_constant_nan(expected)
-    _remove_constant_nan(actual)
-
-    c = assert_allclose(expected[columns],
-                        actual[columns],
-                        **kwargs)
-
-    if c.all().all():
-        return (set(), np.nan, set()) if assertion == "return" else None
-
-    # Get the columns that have the first different value, useful for
-    # debugging
-    false_index = c.apply(
-        lambda x: np.where(~x)[0][0] if not x.all() else np.nan)
-    index_first_false = int(np.nanmin(false_index))
-    time_first_false = c.index[index_first_false]
-    variable_first_false = sorted(
-        false_index.index[false_index == index_first_false])
-
-    columns = sorted(np.array(columns, dtype=str)[~c.all().values])
-
-    assertion_details = "\nFollowing columns are not close:\n\t"\
-                        + ", ".join(columns) + "\n\n"\
-                        + f"First false values ({time_first_false}):\n\t"\
-                        + ", ".join(variable_first_false)
-
-    if verbose:
-        for col in columns:
-            assertion_details += '\n\n'\
-                + f"Column '{col}' is not close."\
-                + '\n\nExpected values:\n\t'\
-                + np.array2string(expected[col].values,
-                                  precision=precision,
-                                  separator=', ')\
-                + '\n\nActual values:\n\t'\
-                + np.array2string(actual[col].values,
-                                  precision=precision,
-                                  separator=', ')\
-                + '\n\nDifference:\n\t'\
-                + np.array2string(expected[col].values-actual[col].values,
-                                  precision=precision,
-                                  separator=', ')
-
-    if assertion == "raise":
-        raise AssertionError(assertion_details)
-    elif assertion == "return":
-        return (set(columns), time_first_false, set(variable_first_false))
-    else:
-        warnings.warn(assertion_details)
+    pass
 
 
 def assert_allclose(x, y, rtol=1.e-5, atol=1.e-5):
@@ -286,12 +164,11 @@ def assert_allclose(x, y, rtol=1.e-5, atol=1.e-5):
     None
 
     """
-    return ((abs(x - y) <= atol + rtol * abs(y)) + x.isna()*y.isna())
+    pass
 
 
 def _remove_constant_nan(df):
     """
     Removes nana values in constant value columns produced by Vensim
     """
-    nan_cols = np.isnan(df.iloc[1:, :]).all().values
-    df.loc[:, nan_cols] = df.loc[:, nan_cols].iloc[0].values
+    pass

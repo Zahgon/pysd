@@ -75,55 +75,34 @@ class Element():
 
     @property
     def _expression(self):  # pragma: no cover
-        if hasattr(self, "ast"):
-            return str(self.ast).replace("\n", "\n\t")
-
-        else:
-            return self.node.text.replace("\n", "\n\t")
+        pass
 
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get element information."""
-        return self.__str__()
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print element information to standard output."""
-        print(self._verbose)
+        pass
 
     def _get_xpath_text(self, node: etree._Element,
                         xpath: str) -> Union[str, None]:
         """Safe access of occassionally missing text"""
-        try:
-            return node.xpath(xpath, namespaces=self.ns)[0].text
-        except IndexError:
-            return None
+        pass
 
     def _get_xpath_attrib(self, node: etree._Element,
                           xpath: str, attrib: str) -> Union[str, None]:
         """Safe access of occassionally missing attributes"""
-        # defined here to take advantage of NS in default
-        try:
-            return node.xpath(xpath, namespaces=self.ns)[0].attrib[attrib]
-        except IndexError:
-            return None
+        pass
 
     def _get_limits(self) -> Tuple[Union[None, str], Union[None, str]]:
         """Get the limits of the element"""
-        lims = (
-            self._get_xpath_attrib(self.node, 'ns:range', 'min'),
-            self._get_xpath_attrib(self.node, 'ns:range', 'max')
-        )
-        return tuple(float(x) if x is not None else x for x in lims)
+        pass
 
     def _get_non_negative(self, behavior):
-        non_negative = behavior or bool(
-            self.node.xpath('ns:non_negative', namespaces=self.ns)
-        )
-        boolean = self._get_xpath_text(self.node, 'ns:non_negative')
-        if boolean is not None:
-            non_negative = 'false' not in boolean.lower()
-        return non_negative
+        pass
 
     def _parse_lookup_xml_node(self, node: etree._Element) -> AbstractSyntax:
         """
@@ -134,34 +113,7 @@ class Element():
         AST: AbstractSyntax
 
         """
-        ys_node = node.xpath('ns:ypts', namespaces=self.ns)[0]
-        ys = np.fromstring(
-            ys_node.text,
-            dtype=float,
-            sep=ys_node.attrib['sep'] if 'sep' in ys_node.attrib else ','
-        )
-        xscale_node = node.xpath('ns:xscale', namespaces=self.ns)
-        if len(xscale_node) > 0:
-            xmin = xscale_node[0].attrib['min']
-            xmax = xscale_node[0].attrib['max']
-            xs = np.linspace(float(xmin), float(xmax), len(ys))
-        else:
-            xs_node = node.xpath('ns:xpts', namespaces=self.ns)[0]
-            xs = np.fromstring(
-                xs_node.text,
-                dtype=float,
-                sep=xs_node.attrib['sep'] if 'sep' in xs_node.attrib else ','
-            )
-
-        interp = node.attrib['type'] if 'type' in node.attrib else 'continuous'
-
-        return structures["lookup"](
-            x=tuple(xs[np.argsort(xs)]),
-            y=tuple(ys[np.argsort(xs)]),
-            x_limits=(np.min(xs), np.max(xs)),
-            y_limits=(np.min(ys), np.max(ys)),
-            type=self._interp_methods[interp]
-        )
+        pass
 
     def parse(self, behaviors: dict) -> None:
         """
@@ -179,33 +131,7 @@ class Element():
         None
 
         """
-        if self.node.xpath("ns:element", namespaces=self.ns):
-            # defined in several equations each with one subscript
-            for subnode in self.node.xpath("ns:element", namespaces=self.ns):
-                self.components.append(
-                    ((subnode.attrib["subscript"].split(","), []),
-                     self._parse_component(subnode, behaviors)[0])
-                )
-        else:
-            # get the subscripts from element
-            subscripts = [
-                subnode.attrib["name"]
-                for subnode
-                in self.node.xpath("ns:dimensions/ns:dim", namespaces=self.ns)
-            ]
-            parsed = self._parse_component(self.node, behaviors)
-            if len(parsed) == 1:
-                # element defined with one equation
-                self.components = [((subscripts, []),  parsed[0])]
-            else:
-                # element defined in several equations, but only the general
-                # subscripts are given, save each equation with its
-                # subscrtipts
-                subs_list = self.subscripts[subscripts[0]]
-                self.components = [
-                    (([subs], []), parsed_i) for subs, parsed_i in
-                    zip(subs_list, parsed)
-                ]
+        pass
 
     def _smile_parser(self, expression: str) -> AbstractSyntax:
         """
@@ -216,9 +142,7 @@ class Element():
         AST: AbstractSyntax
 
         """
-        tree = vu.Grammar.get("equations", parsing_ops).parse(
-            expression.strip())
-        return EquationVisitor(tree).translation
+        pass
 
     def _get_empty_abstract_element(self) -> AbstractElement:
         """
@@ -228,12 +152,7 @@ class Element():
         -------
         AbstractElement
         """
-        return AbstractElement(
-            name=self.name,
-            units=self.units,
-            limits=self.limits,
-            documentation=self.documentation,
-            components=[])
+        pass
 
 
 class Aux(Element):
@@ -269,21 +188,7 @@ class Aux(Element):
         AST: AbstractSyntax
 
         """
-        asts = []
-        for eqn in node.xpath('ns:eqn', namespaces=self.ns):
-            # Replace new lines with space, and replace 2 or more spaces with
-            # single space. Then ensure there is no space at start or end of
-            # equation
-            eqn = re.sub(r"(\s{2,})", " ", eqn.text.replace("\n", ' ')).strip()
-            ast = self._smile_parser(eqn)
-
-            gf_node = self.node.xpath("ns:gf", namespaces=self.ns)
-            if len(gf_node) > 0:
-                ast = structures["inline_lookup"](
-                    ast, self._parse_lookup_xml_node(gf_node[0]))
-            asts.append(ast)
-
-        return asts
+        pass
 
     def get_abstract_element(self) -> AbstractElement:
         """
@@ -299,12 +204,7 @@ class Aux(Element):
           the expressions.
 
         """
-        ae = self._get_empty_abstract_element()
-        for component in self.components:
-            ae.components.append(AbstractComponent(
-                subscripts=component[0],
-                ast=component[1]))
-        return ae
+        pass
 
 
 class Flow(Aux):
@@ -339,17 +239,7 @@ class Flow(Aux):
         AST: AbstractSyntax
 
         """
-        asts = super()._parse_component(node, behaviors)
-        if self._get_non_negative(behaviors['non_negative_flow']):
-            # non_negative flows
-            asts = [
-                CallStructure(
-                    ReferenceStructure("max"), (ast, 0)
-                )
-                for ast in asts
-            ]
-
-        return asts
+        pass
 
 
 class Gf(Element):
@@ -377,11 +267,7 @@ class Gf(Element):
 
     def get_limits(self) -> Tuple[Union[None, str], Union[None, str]]:
         """Get the limits of the Gf element"""
-        lims = (
-            self._get_xpath_attrib(self.node, 'ns:yscale', 'min'),
-            self._get_xpath_attrib(self.node, 'ns:yscale', 'max')
-        )
-        return tuple(float(x) if x is not None else x for x in lims)
+        pass
 
     def _parse_component(self, node: etree._Element,
                          behaviors: dict) -> AbstractSyntax:
@@ -393,7 +279,7 @@ class Gf(Element):
         AST: AbstractSyntax
 
         """
-        return [self._parse_lookup_xml_node(self.node)]
+        pass
 
     def get_abstract_element(self) -> AbstractElement:
         """
@@ -409,12 +295,7 @@ class Gf(Element):
           the expressions.
 
         """
-        ae = self._get_empty_abstract_element()
-        for component in self.components:
-            ae.components.append(AbstractLookup(
-                subscripts=component[0],
-                ast=component[1]))
-        return ae
+        pass
 
 
 class Stock(Element):
@@ -450,40 +331,7 @@ class Stock(Element):
         AST: AbstractSyntax
 
         """
-        # Parse each flow equations
-        inflows = [
-            self._smile_parser(inflow.text)
-            for inflow in self.node.xpath('ns:inflow', namespaces=self.ns)]
-        outflows = [
-            self._smile_parser(outflow.text)
-            for outflow in self.node.xpath('ns:outflow', namespaces=self.ns)]
-
-        if inflows:
-            # stock has inflows
-            expr = ["+"] * (len(inflows)-1) + ["-"] * len(outflows)
-        elif outflows:
-            # stock has no inflows but outflows
-            outflows[0] = structures["negative"](outflows[0])
-            expr = ["-"] * (len(outflows)-1)
-        else:
-            # stock is constant
-            expr = []
-            inflows = [0]
-
-        if expr:
-            # stock has more than one flow
-            flows = structures["arithmetic"](expr, inflows+outflows)
-        else:
-            # stock has only one flow
-            flows = inflows[0] if inflows else outflows[0]
-
-        # Read the initial value equation for stock element
-        initial = self._smile_parser(self._get_xpath_text(self.node, 'ns:eqn'))
-
-        # Get non-negative information
-        non_negative = self._get_non_negative(behaviors['non_negative_stock'])
-
-        return [structures["stock"](flows, initial, non_negative)]
+        pass
 
     def get_abstract_element(self) -> AbstractElement:
         """
@@ -499,12 +347,7 @@ class Stock(Element):
           the expressions.
 
         """
-        ae = self._get_empty_abstract_element()
-        for component in self.components:
-            ae.components.append(AbstractComponent(
-                subscripts=component[0],
-                ast=component[1]))
-        return ae
+        pass
 
 
 class ControlElement(Element):
@@ -534,7 +377,7 @@ class ControlElement(Element):
         None
 
         """
-        self.ast = self._smile_parser(self.eqn)
+        pass
 
     def get_abstract_element(self) -> AbstractElement:
         """
@@ -549,15 +392,7 @@ class ControlElement(Element):
           with the Abstract Syntax Tree of the expression.
 
         """
-        return AbstractControlElement(
-            name=self.name,
-            units=self.units,
-            limits=self.limits,
-            documentation=self.documentation,
-            components=[
-                AbstractComponent(subscripts=([], []), ast=self.ast)
-            ]
-        )
+        pass
 
 
 class SubscriptRange():
@@ -577,12 +412,12 @@ class SubscriptRange():
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get subscript range information."""
-        return self.__str__()
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print subscript range information to standard output."""
-        print(self._verbose)
+        pass
 
     def get_abstract_subscript_range(self) -> AbstractSubscriptRange:
         """
@@ -596,11 +431,7 @@ class SubscriptRange():
           the model in another language.
 
         """
-        return AbstractSubscriptRange(
-            name=self.name,
-            subscripts=self.definition,
-            mapping=self.mapping
-        )
+        pass
 
 
 class EquationVisitor(parsimonious.NodeVisitor):
@@ -613,129 +444,72 @@ class EquationVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_expr_type(self, n, vc):
-        self.translation = self.elements[vc[0]]
+        pass
 
     def visit_logic2_expr(self, n, vc):
         # expressions with logical binary operators (and, or)
-        return vu.split_arithmetic(
-            structures["logic"], parsing_ops["logic_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_logic_expr(self, n, vc):
         # expressions with logical unitary operators (not)
-        id = vc[2]
-        if vc[0].lower() == "not":
-            id = self.add_element(structures["logic"](
-                [":NOT:"],
-                (self.elements[id],)
-                ))
-        return id
+        pass
 
     def visit_comp_expr(self, n, vc):
         # expressions with comparisons (=, <>, <, <=, >, >=)
-        return vu.split_arithmetic(
-            structures["logic"], parsing_ops["comp_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_add_expr(self, n, vc):
         # expressions with additions (+, -)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["add_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_mod_expr(self, n, vc):
         # modulo expressions (mod)
-        if vc[1].lower().startswith("mod"):
-            return self.add_element(
-                structures["call"](
-                    structures["reference"]("modulo"),
-                    (self.elements[vc[0]], self.elements[vc[1][3:]])
-                ))
-        else:
-            return vc[0]
+        pass
 
     def visit_prod_expr(self, n, vc):
         # expressions with products (*, /)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["prod_ops"],
-            "".join(vc).strip(), self.elements)
+        pass
 
     def visit_exp_expr(self, n, vc):
         # expressions with exponentials (^)
-        return vu.split_arithmetic(
-            structures["arithmetic"], parsing_ops["exp_ops"],
-            "".join(vc).strip(), self.elements, self.negatives)
+        pass
 
     def visit_neg_expr(self, n, vc):
-        id = vc[2]
-        if vc[0] == "-":
-            if isinstance(self.elements[id], (float, int)):
-                self.elements[id] = -self.elements[id]
-            else:
-                self.negatives.add(id)
-        return id
+        pass
 
     def visit_call(self, n, vc):
-        func = self.elements[vc[0]]
-        args = self.elements[vc[4]]
-        if func.reference in structures:
-            func_str = structures[func.reference]
-            if isinstance(func_str, dict):
-                return self.add_element(func_str[len(args)](*args))
-            else:
-                return self.add_element(func_str(*args))
-        else:
-            return self.add_element(structures["call"](func, args))
+        pass
 
     def visit_conditional_statement(self, n, vc):
-        return self.add_element(structures["if_then_else"](
-            self.elements[vc[2]],
-            self.elements[vc[6]],
-            self.elements[vc[10]]))
+        pass
 
     def visit_reference(self, n, vc):
-        id = self.add_element(structures["reference"](
-            vc[0].lower().replace(" ", "_").strip("\""), self.subs))
-        self.subs = None
-        return id
+        pass
 
     def visit_array(self, n, vc):
-        if ";" in n.text or "," in n.text:
-            return self.add_element(np.squeeze(np.array(
-                [row.split(",") for row in n.text.strip(";").split(";")],
-                dtype=float)))
-        else:
-            return self.add_element(eval(n.text))
+        pass
 
     def visit_subscript_list(self, n, vc):
-        subs = [x.strip().replace("_", " ") for x in vc[2].split(",")]
-        self.subs = structures["subscripts_ref"](subs)
-        return ""
+        pass
 
     def visit_name(self, n, vc):
-        return n.text.strip()
+        pass
 
     def visit_expr(self, n, vc):
-        if vc[0] not in self.elements:
-            return self.add_element(eval(vc[0]))
-        else:
-            return vc[0]
+        pass
 
     def visit_arguments(self, n, vc):
-        arglist = tuple(x.strip(",") for x in vc)
-        return self.add_element(tuple(
-            self.elements[arg] if arg in self.elements
-            else eval(arg) for arg in arglist))
+        pass
 
     def visit_parens(self, n, vc):
-        return vc[2]
+        pass
 
     def visit__(self, n, vc):
         # handles whitespace characters
-        return ""
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text
+        pass
 
     def add_element(self, element):
-        return vu.add_element(self.elements, element)
+        pass

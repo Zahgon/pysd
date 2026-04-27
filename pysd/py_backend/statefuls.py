@@ -30,19 +30,11 @@ class Stateful(object):
 
     @property
     def state(self):
-        if self._state is None:
-            raise AttributeError(
-                self.py_name
-                + "\nAttempt to call stateful element"
-                + " before it is initialized.")
-        return self._state
+        pass
 
     @state.setter
     def state(self, new_value):
-        if self.shape_info:
-            self._state = xr.DataArray(data=new_value, **self.shape_info)
-        else:
-            self._state = new_value
+        pass
 
 
 class DynamicStateful(Stateful):
@@ -51,12 +43,7 @@ class DynamicStateful(Stateful):
         super().__init__()
 
     def update(self, state):
-        try:
-            self.state = state
-        except Exception as err:
-            raise ValueError(err.args[0] + "\n\n"
-                             + "Could not update the value of "
-                             + self.py_name)
+        pass
 
 
 class Integ(DynamicStateful):
@@ -86,16 +73,10 @@ class Integ(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        if init_val is None:
-            self.state = self.init_func()
-        else:
-            self.state = init_val
-        if isinstance(self.state, xr.DataArray):
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class NonNegativeInteg(Integ):
@@ -121,7 +102,7 @@ class NonNegativeInteg(Integ):
         super().__init__(ddt, initial_value, py_name)
 
     def update(self, state):
-        self.state = np.maximum(state, 0)
+        pass
 
 
 class Delay(DynamicStateful):
@@ -170,34 +151,7 @@ class Delay(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        order = self.order_func()
-
-        if order != int(order):
-            warnings.warn(self.py_name + '\n' +
-                          'Casting delay order '
-                          + f'from {order} to {int(order)}')
-
-        self.order = int(order)  # The order can only be set once
-        if self.order*self.tstep() > np.min(self.delay_time_func()):
-            while self.order*self.tstep() > np.min(self.delay_time_func()):
-                self.order -= 1
-            warnings.warn(self.py_name + '\n' +
-                          'Delay time very small, casting delay order '
-                          + f'from {int(order)} to {self.order}')
-
-        if init_val is None:
-            init_state_value = self.init_func() * self.delay_time_func()
-        else:
-            init_state_value = init_val * self.delay_time_func()
-
-        if isinstance(init_state_value, xr.DataArray):
-            # broadcast self.state
-            self.state = init_state_value.expand_dims({
-                '_delay': np.arange(self.order)}, axis=0)
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
-        else:
-            self.state = np.array([init_state_value] * self.order)
+        pass
 
     def __call__(self):
         if self.shape_info:
@@ -207,16 +161,10 @@ class Delay(DynamicStateful):
             return self.state[-1] / self.delay_time_func()
 
     def ddt(self):
-        outflows = self.state / self.delay_time_func()
-        inflows = np.roll(outflows, 1, axis=0)
-        if self.shape_info:
-            inflows[0] = self.input_func().values
-        else:
-            inflows[0] = self.input_func()
-        return (inflows - outflows) * self.order
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class DelayN(DynamicStateful):
@@ -271,37 +219,7 @@ class DelayN(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        order = self.order_func()
-
-        if order != int(order):
-            warnings.warn(self.py_name + '\n' +
-                          'Casting delay order '
-                          + f'from {order} to {int(order)}')
-
-        self.order = int(order)  # The order can only be set once
-        if self.order*self.tstep() > np.min(self.delay_time_func()):
-            while self.order*self.tstep() > np.min(self.delay_time_func()):
-                self.order -= 1
-            warnings.warn(self.py_name + '\n' +
-                          'Delay time very small, casting delay order '
-                          + f'from {int(order)} to {self.order}')
-
-        if init_val is None:
-            init_state_value = self.init_func() * self.delay_time_func()
-        else:
-            init_state_value = init_val * self.delay_time_func()
-
-        if isinstance(init_state_value, xr.DataArray):
-            # broadcast self.state
-            self.state = init_state_value.expand_dims({
-                '_delay': np.arange(self.order)}, axis=0)
-            self.times = self.delay_time_func().expand_dims({
-                '_delay': np.arange(self.order)}, axis=0)
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
-        else:
-            self.state = np.array([init_state_value] * self.order)
-            self.times = np.array([self.delay_time_func()] * self.order)
+        pass
 
     def __call__(self):
         if self.shape_info:
@@ -311,25 +229,10 @@ class DelayN(DynamicStateful):
             return self.state[-1] / self.times[0]
 
     def ddt(self):
-        if self.shape_info:
-            # if is xarray need to preserve coords
-            self.times = self.times.roll({'_delay': 1}, False)
-            self.times[0] = self.delay_time_func()
-            outflows = self.state / self.times
-            inflows = outflows.roll({'_delay': 1}, False)
-        else:
-            # if is float use numpy.roll
-            self.times = np.roll(self.times, 1, axis=0)
-            self.times[0] = self.delay_time_func()
-            outflows = self.state / self.times
-            inflows = np.roll(outflows, 1, axis=0)
-
-        inflows[0] = self.input_func()
-        return (inflows - outflows)*self.order
+        pass
 
     def export(self):
-        return {'state': self.state, 'times': self.times,
-                'shape_info': self.shape_info}
+        pass
 
 
 class DelayFixed(DynamicStateful):
@@ -372,43 +275,19 @@ class DelayFixed(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        order = max(self.delay_time_func()/self.tstep(), 1)
-
-        if order != int(order):
-            warnings.warn(
-                self.py_name + '\n'
-                + 'Casting delay order from %f to %i' % (
-                    order, round(order + SMALL_VENSIM)))
-
-        # need to add a small decimal to ensure that 0.5 is rounded to 1
-        # The order can only be set once
-        self.order = round(order + SMALL_VENSIM)
-
-        # set the pointer to 0
-        self.pointer = 0
-
-        if init_val is None:
-            init_state_value = self.init_func()
-        else:
-            init_state_value = init_val
-
-        self.state = init_state_value
-        self.pipe = [init_state_value] * self.order
+        pass
 
     def __call__(self):
         return self.state
 
     def ddt(self):
-        return np.nan
+        pass
 
     def update(self, state):
-        self.pipe[self.pointer] = self.input_func()
-        self.pointer = (self.pointer + 1) % self.order
-        self.state = self.pipe[self.pointer]
+        pass
 
     def export(self):
-        return {'state': self.state, 'pointer': self.pointer,
-                'pipe': self.pipe}
+        pass
 
 
 class Forecast(DynamicStateful):
@@ -446,14 +325,7 @@ class Forecast(DynamicStateful):
     def initialize(self, init_trend=None):
 
         # self.state = AV in the vensim docs
-        if init_trend is None:
-            self.state = self.input() / (1 + self.initial_trend())
-        else:
-            self.state = self.input() / (1 + init_trend)
-
-        if isinstance(self.state, xr.DataArray):
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
+        pass
 
     def __call__(self):
         return self.input() * (
@@ -463,10 +335,10 @@ class Forecast(DynamicStateful):
         )
 
     def ddt(self):
-        return (self.input() - self.state) / self.average_time()
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class Smooth(DynamicStateful):
@@ -505,21 +377,7 @@ class Smooth(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        self.order = self.order_func()  # The order can only be set once
-
-        if init_val is None:
-            init_state_value = self.init_func()
-        else:
-            init_state_value = init_val
-
-        if isinstance(init_state_value, xr.DataArray):
-            # broadcast self.state
-            self.state = init_state_value.expand_dims({
-                '_smooth': np.arange(self.order)}, axis=0)
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
-        else:
-            self.state = np.array([init_state_value] * self.order)
+        pass
 
     def __call__(self):
         if self.shape_info:
@@ -528,15 +386,10 @@ class Smooth(DynamicStateful):
             return self.state[-1]
 
     def ddt(self):
-        targets = np.roll(self.state, 1, axis=0)
-        if self.shape_info:
-            targets[0] = self.input_func().values
-        else:
-            targets[0] = self.input_func()
-        return (targets - self.state) * self.order / self.smooth_time_func()
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class Trend(DynamicStateful):
@@ -568,26 +421,17 @@ class Trend(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_trend=None):
-        if init_trend is None:
-            self.state = self.input_func()\
-                / (1 + self.init_func()*self.average_time_function())
-        else:
-            self.state = self.input_func()\
-                / (1 + init_trend*self.average_time_function())
-
-        if isinstance(self.state, xr.DataArray):
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
+        pass
 
     def __call__(self):
         return zidz(self.input_func() - self.state,
                     self.average_time_function() * np.abs(self.state))
 
     def ddt(self):
-        return (self.input_func() - self.state) / self.average_time_function()
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class SampleIfTrue(DynamicStateful):
@@ -620,13 +464,7 @@ class SampleIfTrue(DynamicStateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        if init_val is None:
-            self.state = self.init_func()
-        else:
-            self.state = init_val
-        if isinstance(self.state, xr.DataArray):
-            self.shape_info = {'dims': self.state.dims,
-                               'coords': self.state.coords}
+        pass
 
     def __call__(self):
         return if_then_else(self.condition(),
@@ -634,15 +472,13 @@ class SampleIfTrue(DynamicStateful):
                             lambda: self.state)
 
     def ddt(self):
-        return np.nan
+        pass
 
     def update(self, state):
-        self.state = self.state*0 + if_then_else(self.condition(),
-                                                 self.actual_value,
-                                                 lambda: self.state)
+        pass
 
     def export(self):
-        return {'state': self.state, 'shape_info': self.shape_info}
+        pass
 
 
 class Initial(Stateful):
@@ -668,10 +504,7 @@ class Initial(Stateful):
         self.py_name = py_name
 
     def initialize(self, init_val=None):
-        if init_val is None:
-            self.state = self.init_func()
-        else:
-            self.state = init_val
+        pass
 
     def export(self):
-        return {'state': self.state}
+        pass

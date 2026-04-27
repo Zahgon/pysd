@@ -52,16 +52,12 @@ class VensimFile():
     @property
     def _verbose(self) -> str:  # pragma: no cover
         """Get model information."""
-        text = self.__str__()
-        for section in self.sections:
-            text += section._verbose
-
-        return text
+        pass
 
     @property
     def verbose(self):  # pragma: no cover
         """Print model information to standard output."""
-        print(self._verbose)
+        pass
 
     def _read(self, encoding: Union[None, str]) -> str:
         """
@@ -72,36 +68,15 @@ class VensimFile():
         str: model file content
 
         """
-        # check for model extension
-        if self.mdl_path.suffix.lower() not in supported_extensions:
-            raise ValueError(
-                "The file to translate, '%s' " % self.mdl_path
-                + "is not a Vensim model. It must end with .mdl extension."
-            )
-
-        if encoding is None:
-            # Try detecting the encoding from the file
-            encoding = vu._detect_encoding_from_file(self.mdl_path)
-
-        with self.mdl_path.open("r", encoding=encoding,
-                                errors="ignore") as in_file:
-            model_text = in_file.read()
-
-        return model_text
+        pass
 
     def _split_sketch(self) -> None:
         """Split model from the sketch."""
-        try:
-            split_model = self.model_text.split("\\\\\\---///", 1)
-            self.model_text = self._clean(split_model[0])
-            # remove plots section, if it exists
-            self.sketch = split_model[1].split("///---\\\\\\")[0]
-        except LookupError:
-            pass
+        pass
 
     def _clean(self, text: str) -> str:
         """Remove unnecessary characters."""
-        return re.sub(r"[\n\t\s]+", " ", re.sub(r"\\\n\t", " ", text))
+        pass
 
     def parse(self, parse_all: bool = True) -> None:
         """
@@ -120,24 +95,7 @@ class VensimFile():
             added to self.sections but not parsed. Default is True.
 
         """
-        # get model sections (__main__ + macros)
-        tree = vu.Grammar.get("file_sections").parse(self.model_text)
-        self.sections = FileSectionsVisitor(tree).entries
-
-        # main section path (Python model file)
-        self.sections[0].path = self.mdl_path.with_suffix(".py")
-
-        for section in self.sections[1:]:
-            # macrots paths
-            section.path = self.mdl_path.parent.joinpath(
-                self._clean_file_names(section.name)[0]
-                ).with_suffix(".py")
-
-        if parse_all:
-            # parse all sections
-            for section in self.sections:
-                # parse each section
-                section.parse()
+        pass
 
     def parse_sketch(self, subview_sep: List[str]) -> None:
         """
@@ -161,77 +119,7 @@ class VensimFile():
 
 
         """
-        if self.sketch:
-            sketch = list(map(
-                lambda x: x.strip(),
-                self.sketch.split("\\\\\\---/// ")
-            ))
-        else:
-            warnings.warn(
-                "No sketch detected. The model will be built in a "
-                "single file.")
-            return None
-
-        grammar = vu.Grammar.get("sketch")
-        view_elements = {}
-        for module in sketch:
-            for sketch_line in module.split("\n"):
-                # parsed line could have information about new view name
-                # or of a variable inside a view
-                parsed = SketchVisitor(grammar.parse(sketch_line))
-
-                if parsed.view_name:
-                    view_name = parsed.view_name
-                    view_elements[view_name] = set()
-
-                elif parsed.variable_name:
-                    view_elements[view_name].add(parsed.variable_name)
-
-        # removes views that do not include any variable in them
-        non_empty_views = {
-            key: value for key, value in view_elements.items() if value
-        }
-
-        # split into subviews, if subview_sep is provided
-        views_dict = {}
-
-        if len(non_empty_views) == 1:
-            warnings.warn(
-                "Only a single view with no subviews was detected. The model"
-                " will be built in a single file.")
-            return
-        elif subview_sep and any(
-          sep in view for sep in subview_sep for view in non_empty_views):
-            escaped_separators = list(map(lambda x: re.escape(x), subview_sep))
-            for full_name, values in non_empty_views.items():
-                # split the full view name using the separator and make the
-                # individual parts safe file or directory names
-                clean_view_parts = self._clean_file_names(
-                    *re.split("|".join(escaped_separators), full_name))
-                # creating a nested dict for each view.subview
-                # (e.g. {view_name: {subview_name: [values]}})
-                nested_dict = values
-
-                for item in reversed(clean_view_parts):
-                    nested_dict = {item: nested_dict}
-                # merging the new nested_dict into the views_dict, preserving
-                # repeated keys
-                VensimFile._merge_nested_dicts(views_dict, nested_dict)
-        else:
-            # view names do not have separators or separator characters
-            # not provided
-
-            if subview_sep and not any(
-              sep in view for sep in subview_sep for view in non_empty_views):
-                warnings.warn(
-                    "The given subview separators were not matched in "
-                    "any view name.")
-
-            for view_name, elements in non_empty_views.items():
-                views_dict[self._clean_file_names(view_name)[0]] = elements
-
-        self.sections[0].split = True
-        self.sections[0].views_dict = views_dict
+        pass
 
     def get_abstract_model(self) -> AbstractModel:
         """
@@ -248,10 +136,7 @@ class VensimFile():
           in another language.
 
         """
-        return AbstractModel(
-            original_path=self.mdl_path,
-            sections=tuple(section.get_abstract_section()
-                           for section in self.sections))
+        pass
 
     @staticmethod
     def _clean_file_names(*args):
@@ -269,12 +154,7 @@ class VensimFile():
             List containing the clean strings.
 
         """
-        return [
-            re.sub(
-                r"[\W]+", "",
-                name.replace(" ", "_")
-            ).lstrip("0123456789")
-            for name in args]
+        pass
 
     @staticmethod
     def _merge_nested_dicts(original, to_merge):
@@ -294,23 +174,7 @@ class VensimFile():
         None
 
         """
-        if isinstance(to_merge, Mapping):
-            for key, value in to_merge.items():
-                if key in original:
-                    if isinstance(original[key], set):
-                        # convert it into a dict
-                        original[key] = {"main": original[key]}
-                    VensimFile._merge_nested_dicts(original[key], value)
-                else:
-                    original[key] = value
-        else:  # it's a set
-            if "main" not in original:
-                original["main"] = to_merge
-            else:
-                original["main"].update(to_merge)
-                warnings.warn("Two views with same names but different "
-                              "separators where identified. They will be "
-                              "joined in a single module")
+        pass
 
 
 class FileSectionsVisitor(parsimonious.NodeVisitor):
@@ -321,39 +185,13 @@ class FileSectionsVisitor(parsimonious.NodeVisitor):
 
     def visit_main(self, n, vc):
         # main will always be stored as the first entry
-        if self.entries[0] is None:
-            self.entries[0] = Section(
-                name="__main__",
-                path=Path("."),
-                section_type="main",
-                params=[],
-                returns=[],
-                content=n.text.strip(),
-                split=False,
-                views_dict=None
-            )
-        else:
-            # this is needed when macro parts are in the middle of the file
-            self.entries[0].content += n.text.strip()
+        pass
 
     def visit_macro(self, n, vc):
-        self.entries.append(
-            Section(
-                name=vc[2].strip().lower().replace(" ", "_"),
-                path=Path("."),
-                section_type="macro",
-                params=[
-                    x.strip() for x in vc[6].split(",")] if vc[6] else [],
-                returns=[
-                    x.strip() for x in vc[10].split(",")] if vc[10] else [],
-                content=vc[13].strip(),
-                split=False,
-                views_dict=None
-            )
-        )
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text or ""
+        pass
 
 
 class SketchVisitor(parsimonious.NodeVisitor):
@@ -364,11 +202,10 @@ class SketchVisitor(parsimonious.NodeVisitor):
         self.visit(ast)
 
     def visit_view_name(self, n, vc):
-        self.view_name = n.text.lower()
+        pass
 
     def visit_var_definition(self, n, vc):
-        if int(vc[10]) % 2 != 0:  # not a shadow variable
-            self.variable_name = vc[4].replace(" ", "_").lower()
+        pass
 
     def generic_visit(self, n, vc):
-        return "".join(filter(None, vc)) or n.text.strip() or ""
+        pass
